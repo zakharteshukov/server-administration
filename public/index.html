@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Administration</title>
+    <link rel="icon" type="image/jpeg" href="/favicon.jpg">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', 'Monaco', monospace;
+            background: #000000;
+            min-height: 100vh;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0;
+            padding: 1% 3%;
+            box-sizing: border-box;
+        }
+
+        /* Responsive Container */
+        @media (max-width: 1200px) {
+            .container {
+                padding: 1% 2.5%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1% 2%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0.5% 1.5%;
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #ffffff;
+            border-bottom: 2px solid #333333;
+            padding-bottom: 20px;
+        }
+
+        /* Responsive Header */
+        @media (max-width: 768px) {
+            .header {
+                margin-bottom: 20px;
+                padding-bottom: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                margin-bottom: 15px;
+                padding-bottom: 10px;
+            }
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #ffffff;
+            font-weight: normal;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: #cccccc;
+        }
+
+        /* Responsive Header Text */
+        @media (max-width: 1200px) {
+            .header h1 {
+                font-size: 2.2rem;
+            }
+            .header p {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+                margin-bottom: 8px;
+            }
+            .header p {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.5rem;
+                margin-bottom: 5px;
+            }
+            .header p {
+                font-size: 0.8rem;
+            }
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2%;
+            margin-bottom: 2%;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Responsive Grid Layouts */
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 1fr 1fr;
+                gap: 1.5%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                gap: 1.5%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard {
+                gap: 1%;
+            }
+        }
+
+        .card {
+            background: #111111;
+            border: 1px solid #333333;
+            padding: 2%;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        /* Responsive Cards */
+        @media (max-width: 1200px) {
+            .card {
+                padding: 1.5%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                padding: 1.2%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 1%;
+            }
+        }
+
+        .card:hover {
+            border-color: #666666;
+        }
+
+        .card h2 {
+            color: #ffffff;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            border-bottom: 1px solid #333333;
+            padding-bottom: 10px;
+            font-weight: normal;
+        }
+
+        /* Responsive Card Headings */
+        @media (max-width: 768px) {
+            .card h2 {
+                font-size: 1.1rem;
+                margin-bottom: 15px;
+                padding-bottom: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card h2 {
+                font-size: 1rem;
+                margin-bottom: 12px;
+                padding-bottom: 6px;
+            }
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #222222;
+            border: 1px solid #333333;
+        }
+
+        /* Responsive Metrics */
+        @media (max-width: 768px) {
+            .metric {
+                padding: 6px;
+                margin-bottom: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .metric {
+                padding: 5px;
+                margin-bottom: 6px;
+                font-size: 0.9rem;
+            }
+        }
+
+        .metric-label {
+            font-weight: normal;
+            color: #cccccc;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #333333;
+            overflow: hidden;
+            margin-top: 5px;
+            border: 1px solid #444444;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #ffffff;
+            transition: width 0.3s ease;
+        }
+
+        .terminal-section {
+            grid-column: 1 / -1;
+        }
+
+        .terminal-container {
+            background: #000000;
+            border: 1px solid #333333;
+            padding: 1%;
+            height: 50vh;
+            min-height: 300px;
+            max-height: 600px;
+            overflow: hidden;
+        }
+
+        /* Responsive Terminal */
+        @media (max-width: 1200px) {
+            .terminal-container {
+                height: 45vh;
+                min-height: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .terminal-container {
+                height: 40vh;
+                min-height: 200px;
+                padding: 0.8%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .terminal-container {
+                height: 35vh;
+                min-height: 150px;
+                padding: 0.5%;
+            }
+        }
+
+        #terminal {
+            height: 100%;
+        }
+
+        /* Responsive Terminal Font */
+        @media (max-width: 768px) {
+            #terminal {
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #terminal {
+                font-size: 10px;
+            }
+        }
+
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            margin-right: 6px;
+        }
+
+        .status-online {
+            background: #ffffff;
+        }
+
+        .status-offline {
+            background: #666666;
+        }
+
+        .server-control {
+            display: flex;
+            gap: 2%;
+            justify-content: space-between;
+            margin-top: 2%;
+        }
+
+        .control-button {
+            background: #222222;
+            border: 1px solid #333333;
+            color: #ffffff;
+            padding: 2% 4%;
+            cursor: pointer;
+            font-family: 'Courier New', 'Monaco', monospace;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            width: 32%;
+            flex: 1;
+            min-width: 30%;
+        }
+
+        /* Responsive Button Sizing */
+        @media (max-width: 768px) {
+            .control-button {
+                font-size: 12px;
+                padding: 2.5% 4%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .server-control {
+                flex-direction: column;
+                gap: 1%;
+            }
+            
+            .control-button {
+                font-size: 11px;
+                padding: 3% 5%;
+                width: 100%;
+            }
+        }
+
+        .control-button:hover {
+            background: #333333;
+            border-color: #666666;
+        }
+
+        .shutdown-button {
+            background: #440000;
+            border-color: #660000;
+        }
+
+        .shutdown-button:hover {
+            background: #660000;
+            border-color: #880000;
+        }
+
+        .reboot-button {
+            background: #004400;
+            border-color: #006600;
+        }
+
+        .reboot-button:hover {
+            background: #006600;
+            border-color: #008800;
+        }
+
+        .logout-button {
+            background: #333366;
+            border-color: #444477;
+        }
+
+        .logout-button:hover {
+            background: #444477;
+            border-color: #555588;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SERVER ADMINISTRATION</h1>
+            <p>Real-time system monitoring with root terminal access</p>
+        </div>
+
+        <div class="dashboard">
+            <!-- Terminal -->
+            <div class="card terminal-section">
+                <h2>ROOT TERMINAL</h2>
+                <div class="terminal-container">
+                    <div id="terminal"></div>
+                </div>
+            </div>
+
+            <!-- System Overview -->
+            <div class="card">
+                <h2>SYSTEM OVERVIEW</h2>
+                <div class="metric">
+                    <span class="metric-label">OS</span>
+                    <span class="metric-value" id="os-info">Loading...</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Uptime</span>
+                    <span class="metric-value" id="uptime">Loading...</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Hostname</span>
+                    <span class="metric-value" id="hostname">Loading...</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Status</span>
+                    <span class="metric-value">
+                        <span class="status-indicator status-online"></span>
+                        Online
+                    </span>
+                </div>
+            </div>
+
+            <!-- CPU Usage -->
+            <div class="card">
+                <h2>CPU USAGE</h2>
+                <div class="metric">
+                    <span class="metric-label">CPU Usage</span>
+                    <span class="metric-value" id="cpu-usage">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="cpu-progress" style="width: 0%"></div>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Load Average</span>
+                    <span class="metric-value" id="load-average">0.00</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Temperature</span>
+                    <span class="metric-value" id="cpu-temp">N/A</span>
+                </div>
+            </div>
+
+            <!-- Memory Usage -->
+            <div class="card">
+                <h2>MEMORY USAGE</h2>
+                <div class="metric">
+                    <span class="metric-label">Memory Used</span>
+                    <span class="metric-value" id="memory-used">0 GB</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="memory-progress" style="width: 0%"></div>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Memory Total</span>
+                    <span class="metric-value" id="memory-total">0 GB</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Memory Free</span>
+                    <span class="metric-value" id="memory-free">0 GB</span>
+                </div>
+            </div>
+
+            <!-- Disk Usage -->
+            <div class="card">
+                <h2>DISK USAGE</h2>
+                <div class="metric">
+                    <span class="metric-label">Disk Used</span>
+                    <span class="metric-value" id="disk-used">0 GB</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="disk-progress" style="width: 0%"></div>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Disk Total</span>
+                    <span class="metric-value" id="disk-total">0 GB</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Disk Free</span>
+                    <span class="metric-value" id="disk-free">0 GB</span>
+                </div>
+            </div>
+
+        <!-- Server Control -->
+        <div class="card">
+            <h2>SERVER CONTROL</h2>
+            <div class="server-control">
+                <button class="control-button shutdown-button" onclick="shutdownServer()">SHUTDOWN</button>
+                <button class="control-button reboot-button" onclick="rebootServer()">REBOOT</button>
+                <button class="control-button logout-button" onclick="logout()">LOGOUT</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <script>
+        // Check authentication on page load
+        window.addEventListener('load', function() {
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            // Initialize Socket.IO connection with authentication
+            const socket = io({
+                auth: {
+                    token: token
+                }
+            });
+            
+            // Handle authentication errors
+            socket.on('connect_error', (error) => {
+                if (error.message === 'Authentication failed') {
+                    localStorage.removeItem('adminToken');
+                    window.location.href = '/login';
+                }
+            });
+            
+            initializeApp(socket);
+        });
+        
+        function initializeApp(socket) {
+        
+        // Initialize terminal
+        const terminal = new Terminal({
+            theme: {
+                background: '#000000',
+                foreground: '#ffffff',
+                cursor: '#ffffff',
+                selection: '#333333'
+            },
+            fontSize: 13,
+            fontFamily: 'Courier New, Monaco, monospace',
+            cols: 120,
+            rows: 30,
+            scrollback: 1000,
+            allowTransparency: false,
+            cursorBlink: true,
+            cursorStyle: 'block'
+        });
+        
+        const fitAddon = new FitAddon.FitAddon();
+        terminal.loadAddon(fitAddon);
+        
+        terminal.open(document.getElementById('terminal'));
+        fitAddon.fit();
+        
+        // Terminal event handlers
+        terminal.onData(data => {
+            socket.emit('terminal:input', data);
+        });
+        
+        socket.on('terminal:data', data => {
+            terminal.write(data);
+        });
+        
+        socket.on('terminal:created', () => {
+            terminal.focus();
+        });
+        
+        socket.on('terminal:exit', () => {
+            terminal.write('\r\nTerminal session ended.\r\n');
+        });
+        
+        // Handle terminal resize
+        window.addEventListener('resize', () => {
+            fitAddon.fit();
+            const { cols, rows } = terminal;
+            socket.emit('terminal:resize', { cols, rows });
+        });
+        
+        // Initialize terminal session with larger dimensions
+        socket.emit('terminal:create', { cols: 120, rows: 30 });
+        
+        // System monitoring functions
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        function formatUptime(seconds) {
+            const days = Math.floor(seconds / 86400);
+            const hours = Math.floor((seconds % 86400) / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            return `${days}d ${hours}h ${minutes}m`;
+        }
+        
+        // Load initial system data
+        async function loadSystemData() {
+            try {
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch('/api/system', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.status === 401) {
+                    localStorage.removeItem('adminToken');
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                document.getElementById('os-info').textContent = `${data.osInfo.distro} ${data.osInfo.release}`;
+                document.getElementById('hostname').textContent = data.osInfo.hostname;
+                
+                // Format uptime
+                const uptimeFormatted = formatUptime(data.osInfo.uptime);
+                document.getElementById('uptime').textContent = uptimeFormatted;
+                
+                // Memory info
+                const memUsed = formatBytes(data.memory.used);
+                const memTotal = formatBytes(data.memory.total);
+                const memFree = formatBytes(data.memory.free);
+                const memPercent = ((data.memory.used / data.memory.total) * 100).toFixed(1);
+                
+                document.getElementById('memory-used').textContent = memUsed;
+                document.getElementById('memory-total').textContent = memTotal;
+                document.getElementById('memory-free').textContent = memFree;
+                document.getElementById('memory-progress').style.width = memPercent + '%';
+                
+                // Disk info
+                if (data.disk.length > 0) {
+                    const disk = data.disk[0];
+                    const diskUsed = formatBytes(disk.used);
+                    const diskTotal = formatBytes(disk.size);
+                    const diskFree = formatBytes(disk.available);
+                    const diskPercent = ((disk.used / disk.size) * 100).toFixed(1);
+                    
+                    document.getElementById('disk-used').textContent = diskUsed;
+                    document.getElementById('disk-total').textContent = diskTotal;
+                    document.getElementById('disk-free').textContent = diskFree;
+                    document.getElementById('disk-progress').style.width = diskPercent + '%';
+                }
+                
+                
+            } catch (error) {
+                console.error('Error loading system data:', error);
+            }
+        }
+        
+        
+        // Real-time updates via WebSocket
+        socket.on('system:update', (data) => {
+            // CPU usage
+            const cpuPercent = data.load.currentLoad.toFixed(1);
+            document.getElementById('cpu-usage').textContent = cpuPercent + '%';
+            document.getElementById('cpu-progress').style.width = cpuPercent + '%';
+            
+            // Load average
+            const loadAvg = data.load.avgLoad.toFixed(2);
+            document.getElementById('load-average').textContent = loadAvg;
+            
+            // Memory usage
+            const memPercent = ((data.memory.used / data.memory.total) * 100).toFixed(1);
+            document.getElementById('memory-progress').style.width = memPercent + '%';
+            
+            // Update uptime
+            if (data.uptime) {
+                const uptimeFormatted = formatUptime(data.uptime);
+                document.getElementById('uptime').textContent = uptimeFormatted;
+            }
+        });
+        
+        // Load initial data
+        loadSystemData();
+        }
+        
+        // Server control functions (global scope)
+        function shutdownServer() {
+            const password = prompt('Enter password to shutdown server:');
+            if (password === null) return; // User cancelled
+            
+            const token = localStorage.getItem('adminToken');
+            fetch('/api/shutdown', { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Server shutdown initiated successfully.');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to initiate shutdown.');
+            });
+        }
+        
+        function rebootServer() {
+            const password = prompt('Enter password to reboot server:');
+            if (password === null) return; // User cancelled
+            
+            const token = localStorage.getItem('adminToken');
+            fetch('/api/reboot', { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Server reboot initiated successfully.');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to initiate reboot.');
+            });
+        }
+        
+        // Logout function (global scope)
+        function logout() {
+            const token = localStorage.getItem('adminToken');
+            if (token) {
+                fetch('/api/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }).catch(error => {
+                    console.error('Logout error:', error);
+                });
+            }
+            localStorage.removeItem('adminToken');
+            window.location.href = '/login';
+        }
+    </script>
+</body>
+</html>

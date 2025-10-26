@@ -1,0 +1,34 @@
+services:
+  system-monitor:
+    build: .
+    container_name: system-monitor
+    network_mode: host
+    volumes:
+      - /:/host:rw
+      - /proc:/host/proc:rw
+      - /sys:/host/sys:rw
+      - /dev:/host/dev:rw
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+      - /etc/passwd:/host/etc/passwd:ro
+      - /etc/shadow:/host/etc/shadow:ro
+      - /etc/group:/host/etc/group:ro
+      - /etc/hosts:/host/etc/hosts:ro
+      - /etc/resolv.conf:/host/etc/resolv.conf:ro
+      - ./ssl:/app/ssl:ro
+    environment:
+      - NODE_ENV=production
+      - HTTP_PORT=3000
+      - HTTPS_PORT=3443
+    restart: unless-stopped
+    privileged: true
+    user: root
+    security_opt:
+      - seccomp:unconfined
+      - apparmor:unconfined
+    cap_add:
+      - ALL
+    pid: host
+
+networks:
+  monitor-network:
+    driver: bridge

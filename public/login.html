@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Administration - Login</title>
+    <link rel="icon" type="image/jpeg" href="/favicon.jpg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000000;
+            color: #ffffff;
+            font-family: 'Courier New', 'Monaco', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .login-container {
+            background: #111111;
+            border: 1px solid #333333;
+            padding: 3%;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-header {
+            margin-bottom: 2%;
+        }
+
+        .login-header h1 {
+            font-size: 24px;
+            margin-bottom: 1%;
+            color: #ffffff;
+        }
+
+        .login-header p {
+            font-size: 14px;
+            color: #cccccc;
+        }
+
+        .form-group {
+            margin-bottom: 2%;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 1%;
+            font-size: 14px;
+            color: #cccccc;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 2%;
+            background: #222222;
+            border: 1px solid #333333;
+            color: #ffffff;
+            font-family: 'Courier New', 'Monaco', monospace;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #555555;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 2%;
+            background: #333333;
+            border: 1px solid #444444;
+            color: #ffffff;
+            font-family: 'Courier New', 'Monaco', monospace;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 2%;
+        }
+
+        .login-button:hover {
+            background: #444444;
+            border-color: #555555;
+        }
+
+        .error-message {
+            color: #ff6666;
+            font-size: 12px;
+            margin-top: 2%;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .login-container {
+                padding: 4%;
+                width: 95%;
+            }
+            
+            .login-header h1 {
+                font-size: 20px;
+            }
+            
+            .login-header p {
+                font-size: 12px;
+            }
+            
+            .form-group input,
+            .login-button {
+                font-size: 12px;
+                padding: 3%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 5%;
+            }
+            
+            .login-header h1 {
+                font-size: 18px;
+            }
+            
+            .login-header p {
+                font-size: 11px;
+            }
+            
+            .form-group input,
+            .login-button {
+                font-size: 11px;
+                padding: 4%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>SERVER ADMINISTRATION</h1>
+            <p>Enter password to access system</p>
+        </div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password">
+            </div>
+            
+            <button type="submit" class="login-button">LOGIN</button>
+            
+            <div id="errorMessage" class="error-message">
+                Invalid password. Access denied.
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ password: password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Store session token
+                    localStorage.setItem('adminToken', data.token);
+                    // Redirect to main dashboard
+                    window.location.href = '/';
+                } else {
+                    errorMessage.classList.add('show');
+                    document.getElementById('password').value = '';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorMessage.classList.add('show');
+                document.getElementById('password').value = '';
+            }
+        });
+
+        // Check if already logged in
+        if (localStorage.getItem('adminToken')) {
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>
