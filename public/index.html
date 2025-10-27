@@ -1672,7 +1672,7 @@
                 <button class="security-tab" onclick="switchSecurityTab('openvpn')">OpenVPN</button>
                 <button class="security-tab" onclick="switchSecurityTab('connections')">Active Connections</button>
             </div>
-            <div id="security-content">
+            <div id="security-content" class="security-content">
                 <!-- Security content will be populated here -->
             </div>
         </div>
@@ -1689,6 +1689,10 @@
     </div>
 
     <script>
+        // Global variables for file manager and security dashboard
+        let currentPath = '/host/root';
+        let currentSecurityTab = 'ssh';
+        
         // Check authentication on page load
         window.addEventListener('load', function() {
             const token = localStorage.getItem('adminToken');
@@ -1713,6 +1717,14 @@
             });
             
             initializeApp(socket);
+            
+            // Load initial data for file manager and security
+            loadFileManager();
+            loadSecurityData('ssh');
+            
+            // Set up periodic updates for file manager and security
+            setInterval(loadFileManager, 30000); // Update file manager every 30 seconds
+            setInterval(() => loadSecurityData(currentSecurityTab), 15000); // Update security every 15 seconds
         });
         
         function initializeApp(socket) {
@@ -2444,8 +2456,6 @@
         }
         
         // File Manager functionality
-        let currentPath = '/host/root';
-        
         async function loadFileManager() {
             try {
                 const token = localStorage.getItem('adminToken');
@@ -2534,8 +2544,6 @@
         }
         
         // Security Dashboard functionality
-        let currentSecurityTab = 'ssh';
-        
         async function loadSecurityData(tab) {
             try {
                 const token = localStorage.getItem('adminToken');
@@ -2669,14 +2677,6 @@
             
             loadSecurityData(tab);
         }
-        
-        // Load initial data for file manager and security
-        loadFileManager();
-        loadSecurityData('ssh');
-        
-        // Set up periodic updates
-        setInterval(loadFileManager, 30000); // Update file manager every 30 seconds
-        setInterval(() => loadSecurityData(currentSecurityTab), 15000); // Update security every 15 seconds
     </script>
 </body>
 </html>
