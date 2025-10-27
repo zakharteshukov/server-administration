@@ -859,12 +859,12 @@ app.get('/api/security/ssh', requireAuth, async (req, res) => {
   try {
     const { exec } = require('child_process');
     
-    exec('who', (error, stdout, stderr) => {
+    exec('chroot /host who', (error, stdout, stderr) => {
       if (error) {
         return res.status(500).json({ error: error.message });
       }
       
-      const sessions = stdout.trim().split('\n').map(line => {
+      const sessions = stdout.trim().split('\n').filter(line => line.trim()).map(line => {
         const parts = line.trim().split(/\s+/);
         return {
           user: parts[0],
@@ -886,12 +886,12 @@ app.get('/api/security/openvpn', requireAuth, async (req, res) => {
   try {
     const { exec } = require('child_process');
     
-    exec('ps aux | grep openvpn | grep -v grep', (error, stdout, stderr) => {
+    exec('chroot /host ps aux | grep openvpn | grep -v grep', (error, stdout, stderr) => {
       if (error && error.code !== 1) {
         return res.status(500).json({ error: error.message });
       }
       
-      const processes = stdout.trim().split('\n').map(line => {
+      const processes = stdout.trim().split('\n').filter(line => line.trim()).map(line => {
         const parts = line.trim().split(/\s+/);
         return {
           user: parts[0],
@@ -913,12 +913,12 @@ app.get('/api/security/connections', requireAuth, async (req, res) => {
   try {
     const { exec } = require('child_process');
     
-    exec('ss -tnp | grep -E "ESTAB|LISTEN"', (error, stdout, stderr) => {
+    exec('chroot /host ss -tnp | grep -E "ESTAB|LISTEN"', (error, stdout, stderr) => {
       if (error) {
         return res.status(500).json({ error: error.message });
       }
       
-      const connections = stdout.trim().split('\n').map(line => {
+      const connections = stdout.trim().split('\n').filter(line => line.trim()).map(line => {
         const parts = line.trim().split(/\s+/);
         return {
           state: parts[0],
