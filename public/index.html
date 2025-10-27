@@ -456,6 +456,12 @@
         .terminal-content {
             position: relative;
             height: calc(100% - 41px);
+            padding-top: 3px;
+            overflow: hidden;
+        }
+        
+        .terminal-content > div {
+            height: 100%;
         }
         
         .terminal-content .terminal {
@@ -536,21 +542,23 @@
             background: #222222;
             border: 1px solid #333333;
             color: #ffffff;
-            padding: 2% 4%;
+            padding: 4px 16px;
             cursor: pointer;
             font-family: 'Courier New', 'Monaco', monospace;
-            font-size: 14px;
+            font-size: 13px;
             transition: all 0.3s ease;
             width: 32%;
             flex: 1;
             min-width: 30%;
+            height: auto;
+            line-height: 1.2;
         }
 
         /* Responsive Button Sizing */
         @media (max-width: 768px) {
             .control-button {
                 font-size: 12px;
-                padding: 2.5% 4%;
+                padding: 6px 14px;
             }
         }
 
@@ -561,8 +569,8 @@
             }
             
             .control-button {
-                font-size: 10px;
-                padding: 2% 3%;
+                font-size: 11px;
+                padding: 6px 12px;
                 min-width: 0;
             }
         }
@@ -641,12 +649,12 @@
 
         .docker-container {
             display: grid;
-            grid-template-columns: minmax(180px, 200px) minmax(250px, 2fr) minmax(110px, 120px) minmax(170px, 190px);
+            grid-template-columns: minmax(180px, 200px) minmax(250px, 2fr) minmax(165px, 180px) minmax(170px, 190px);
             padding: 8px 12px;
             border-bottom: 1px solid #222222;
             align-items: center;
             font-size: 12px;
-            min-width: 860px;
+            min-width: 965px;
         }
 
         .docker-container > div {
@@ -668,13 +676,16 @@
 
         .docker-header {
             display: grid;
-            grid-template-columns: minmax(180px, 200px) minmax(250px, 2fr) minmax(110px, 120px) minmax(170px, 190px);
+            grid-template-columns: minmax(180px, 200px) minmax(250px, 2fr) minmax(165px, 180px) minmax(170px, 190px);
             padding: 8px 12px;
             background: #333333;
             font-weight: bold;
             font-size: 12px;
             border-bottom: 2px solid #444444;
-            min-width: 860px;
+            min-width: 965px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .docker-header > div {
@@ -708,7 +719,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            text-align: right;
+            text-align: left;
         }
         
 
@@ -721,7 +732,7 @@
 
         .docker-btn,
         .service-btn {
-            padding: 3px 10px;
+            padding: 2px 10px;
             font-size: 11px;
             border: 1px solid #333333;
             background: #222222;
@@ -816,6 +827,9 @@
             font-weight: bold;
             font-size: 12px;
             border-bottom: 1px solid #444444;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .service-name {
@@ -935,7 +949,7 @@
 
         @media (max-width: 480px) {
             .docker-btn {
-                padding: 3px 8px;
+                padding: 2px 8px;
                 font-size: 10px;
             }
         }
@@ -956,8 +970,6 @@
         }
         
         /* Touch target optimization - minimum 44x44px for mobile */
-        button, 
-        .control-button,
         .docker-btn,
         .service-btn,
         .terminal-tab,
@@ -966,13 +978,30 @@
             min-width: 44px;
         }
         
+        /* Control buttons (SERVER CONTROL) - separate styling */
+        .control-button {
+            min-height: auto;
+        }
+        
+        @media (min-width: 769px) {
+            /* Desktop buttons - reduced height */
+            .docker-btn,
+            .service-btn {
+                min-height: auto;
+            }
+        }
+        
         @media (max-width: 480px) {
-            button, 
-            .control-button,
             .docker-btn,
             .service-btn {
                 padding: 12px 16px;
                 font-size: 14px;
+            }
+            
+            /* Control buttons keep smaller padding on mobile */
+            .control-button {
+                padding: 10px 16px;
+                font-size: 13px;
             }
         }
         
@@ -1032,9 +1061,17 @@
         
         /* Button text should not wrap on very small screens */
         @media (max-width: 360px) {
-            button, .control-button {
+            .docker-btn,
+            .service-btn {
                 font-size: 12px;
                 padding: 10px 12px;
+                white-space: nowrap;
+            }
+            
+            /* Control buttons - separate styling for very small screens */
+            .control-button {
+                font-size: 11px;
+                padding: 8px 12px;
                 white-space: nowrap;
             }
         }
