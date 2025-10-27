@@ -865,13 +865,26 @@ app.get('/api/security/ssh', requireAuth, async (req, res) => {
       }
       
       const sessions = stdout.trim().split('\n').filter(line => line.trim()).map(line => {
+        // Parse "user tty date time (ip)" format
+        const match = line.trim().match(/^(\S+)\s+(\S+)\s+(.+?)\s+\((.+)\)$/);
+        if (match) {
+          return {
+            user: match[1],
+            tty: match[2],
+            time: match[3],
+            ip: match[4],
+            hostname: ''
+          };
+        }
+        
+        // Fallback for other formats
         const parts = line.trim().split(/\s+/);
         return {
-          user: parts[0],
-          tty: parts[1],
-          time: parts[2],
-          ip: parts[3] || 'localhost',
-          hostname: parts[4] || ''
+          user: parts[0] || '',
+          tty: parts[1] || '',
+          time: parts.slice(2, -1).join(' ') || '',
+          ip: parts[parts.length - 1]?.replace(/[()]/g, '') || 'localhost',
+          hostname: ''
         };
       });
       
