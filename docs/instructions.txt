@@ -1,0 +1,65 @@
+================================================
+SERVER-DASHBOARD - Development Instructions
+================================================
+
+PROBLEM: Why is the website so slow to update once you make changes?
+------------------------------------------------------------
+The production Docker setup copies your source code into the Docker image.
+When you make changes, you need to rebuild the entire image, which is slow.
+
+SOLUTION: Development Mode with Hot-Reload
+------------------------------------------------------------
+Use docker-compose.dev.yml which mounts your code as a volume and uses nodemon
+for automatic restart when you make changes (usually 1-2 seconds).
+
+
+QUICK START - Development Mode
+------------------------------------------------------------
+1. Stop the current container:
+   docker-compose down
+
+2. Start in development mode:
+   docker-compose -f docker-compose.dev.yml up --build
+
+3. Make changes to server.js or public/* files
+   The server will automatically restart!
+
+4. To switch back to production:
+   docker-compose -f docker-compose.dev.yml down
+   docker-compose up --build
+
+
+KEY DIFFERENCES
+------------------------------------------------------------
+Production Mode (docker-compose.yml):
+  - Code copied into image (needs rebuild for changes)
+  - Smaller image size
+  - Production dependencies only
+
+Development Mode (docker-compose.dev.yml):
+  - Code mounted as volume (immediate updates)
+  - Nodemon auto-restart on changes
+  - All dev dependencies included
+
+
+TROUBLESHOOTING
+------------------------------------------------------------
+Changes not reflecting?
+  - Check logs: docker logs system-monitor-dev
+  - Should see: [nodemon] restarting due to changes...
+
+Container won't start?
+  - Make sure production container is stopped: docker-compose down
+  - Check logs: docker logs system-monitor-dev
+
+For more details: See DEVELOPMENT.md
+
+
+MANUAL INSTALLATION (Alternative)
+------------------------------------------------------------
+Without Docker:
+
+npm install          # Install dependencies
+npm run dev         # Start with hot-reload
+npm start           # Start production mode
+

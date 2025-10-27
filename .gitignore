@@ -119,3 +119,6 @@ volumes/
 *.bak
 *.backup
 *.old
+
+# Session storage
+sessions.json

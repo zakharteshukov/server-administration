@@ -26,7 +26,7 @@ const HTTP_PORT = process.env.HTTP_PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // No redirect needed - nginx handles HTTPS termination
 
@@ -39,7 +39,7 @@ const SESSION_SECRET = crypto.randomBytes(32).toString('hex');
 
 // Load sessions from file on startup
 const sessions = new Map();
-const SESSIONS_FILE = path.join(__dirname, 'sessions.json');
+const SESSIONS_FILE = path.join(__dirname, '..', 'sessions.json');
 
 try {
   if (fs.existsSync(SESSIONS_FILE)) {
@@ -121,7 +121,7 @@ function requireAuth(req, res, next) {
 
 // Routes
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
 });
 
 app.post('/api/login', (req, res) => {
@@ -166,11 +166,11 @@ app.get('/', (req, res) => {
     return res.redirect('/login');
   }
   
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 app.get('/terminal-fullscreen', requireAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'terminal-fullscreen.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'terminal-fullscreen.html'));
 });
 
 // Docker containers endpoint

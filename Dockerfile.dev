@@ -23,25 +23,20 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install --production
+# Install ALL dependencies (including devDependencies for nodemon)
+RUN npm install
 
-# Copy application code
-COPY . .
-
-# Copy and setup host wrapper script
+# Copy wrapper scripts
 COPY scripts/host-wrapper.sh /usr/local/bin/host-wrapper
 RUN chmod +x /usr/local/bin/host-wrapper
 
-# Copy cursor-agent wrapper
 COPY scripts/cursor-agent-wrapper.sh /usr/local/bin/cursor-agent
 RUN chmod +x /usr/local/bin/cursor-agent
 
-# Copy bashrc for terminal setup
 COPY config/bashrc /tmp/bashrc
 
-# Ensure we can access host system
-RUN chmod +x /app/src/server.js
+# Copy application code (this will be overridden by volume mount in dev mode)
+COPY . .
 
 # Expose port
 EXPOSE 3000
@@ -50,5 +45,6 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node -e "require('https').get('https://127.0.0.1:3443/api/system', {rejectUnauthorized: false}, (res) => { process.exit(res.statusCode === 401 ? 0 : 1) })"
 
-# Start the application as root
-CMD ["node", "src/server.js"]
+# Use nodemon for development (default command, can be overridden)
+CMD ["npm", "run", "dev"]
+

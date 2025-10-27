@@ -14,13 +14,21 @@ A comprehensive system monitoring web application with an embedded terminal, bui
 
 ### Using Docker (Recommended)
 
-1. **Build and run the application:**
-   ```bash
-   docker-compose up --build
-   ```
+**Production Mode:**
+```bash
+docker-compose up --build
+```
 
-2. **Access the application:**
-   Open your browser and go to `http://localhost:3000`
+**Development Mode** (with hot-reload):
+```bash
+# Stop any running containers first
+docker-compose down
+
+# Start in development mode
+docker-compose -f docker-compose.dev.yml up --build
+```
+
+For more details, see [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)
 
 ### Manual Installation
 
@@ -31,7 +39,11 @@ A comprehensive system monitoring web application with an embedded terminal, bui
 
 2. **Start the application:**
    ```bash
+   # Production mode
    npm start
+
+   # Development mode with hot-reload
+   npm run dev
    ```
 
 3. **Access the application:**
