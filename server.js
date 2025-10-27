@@ -1,6 +1,5 @@
 const express = require('express');
 const http = require('http');
-const https = require('https');
 const socketIo = require('socket.io');
 const cors = require('cors');
 const si = require('systeminformation');
@@ -11,18 +10,11 @@ const crypto = require('crypto');
 
 const app = express();
 
-// SSL Configuration
-const sslOptions = {
-  key: fs.readFileSync(path.join(__dirname, 'ssl', 'key.pem')),
-  cert: fs.readFileSync(path.join(__dirname, 'ssl', 'cert.pem'))
-};
-
-// Create both HTTP and HTTPS servers
+// Create HTTP server only (nginx handles SSL termination)
 const httpServer = http.createServer(app);
-const httpsServer = https.createServer(sslOptions, app);
 
-// Socket.IO configuration for both servers
-const io = socketIo(httpsServer, {
+// Socket.IO configuration
+const io = socketIo(httpServer, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"]
@@ -30,21 +22,13 @@ const io = socketIo(httpsServer, {
 });
 
 const HTTP_PORT = process.env.HTTP_PORT || 3000;
-const HTTPS_PORT = process.env.HTTPS_PORT || 3443;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Redirect HTTP to HTTPS (only for HTTP server)
-app.use((req, res, next) => {
-  if (req.secure) {
-    next();
-  } else {
-    res.redirect(`https://${req.headers.host.replace(/:\d+$/, '')}:${HTTPS_PORT}${req.url}`);
-  }
-});
+// No redirect needed - nginx handles HTTPS termination
 
 // Store terminal sessions
 const terminals = new Map();
@@ -52,7 +36,27 @@ const terminals = new Map();
 // Authentication configuration
 const ADMIN_PASSWORD = 'admin123'; // Change this password
 const SESSION_SECRET = crypto.randomBytes(32).toString('hex');
-const sessions = new Map(); // Store active sessions
+
+// Load sessions from file on startup
+const sessions = new Map();
+const SESSIONS_FILE = path.join(__dirname, 'sessions.json');
+
+try {
+  if (fs.existsSync(SESSIONS_FILE)) {
+    const data = fs.readFileSync(SESSIONS_FILE, 'utf8');
+    const sessionsData = JSON.parse(data);
+    const now = Date.now();
+    for (const [token, session] of Object.entries(sessionsData)) {
+      // Only load sessions less than 30 days old
+      if (now - session.lastAccess < 30 * 24 * 60 * 60 * 1000) {
+        sessions.set(token, session);
+      }
+    }
+    console.log(`Loaded ${sessions.size} sessions from file`);
+  }
+} catch (err) {
+  console.error('Error loading sessions:', err);
+}
 
 // Session management
 function generateSessionToken() {
@@ -69,20 +73,35 @@ function createSession() {
     createdAt: Date.now(),
     lastAccess: Date.now()
   });
+  saveSessions(); // Save to disk
   return token;
+}
+
+// Save sessions to file
+function saveSessions() {
+  try {
+    const sessionsObj = {};
+    sessions.forEach((value, key) => {
+      sessionsObj[key] = value;
+    });
+    fs.writeFileSync(SESSIONS_FILE, JSON.stringify(sessionsObj, null, 2));
+  } catch (err) {
+    console.error('Error saving sessions:', err);
+  }
 }
 
 function updateSession(token) {
   if (sessions.has(token)) {
     sessions.get(token).lastAccess = Date.now();
+    saveSessions(); // Save to disk
   }
 }
 
-// Clean up expired sessions (older than 24 hours)
+// Clean up expired sessions (older than 30 days)
 setInterval(() => {
   const now = Date.now();
   for (const [token, session] of sessions.entries()) {
-    if (now - session.lastAccess > 24 * 60 * 60 * 1000) {
+    if (now - session.lastAccess > 30 * 24 * 60 * 60 * 1000) {
       sessions.delete(token);
     }
   }
@@ -943,6 +962,8 @@ app.get('/api/security/openvpn', requireAuth, async (req, res) => {
         const clients = [];
         let inClientSection = false;
         
+        // Parse clients from status file
+        const clientList = [];
         lines.forEach(line => {
           if (line.includes('CLIENT LIST')) {
             inClientSection = true;
@@ -955,61 +976,126 @@ app.get('/api/security/openvpn', requireAuth, async (req, res) => {
           if (inClientSection && line && !line.includes('Updated,') && !line.includes('Common Name')) {
             const [name, address, bytesReceived, bytesSent, connectedSince] = line.split(',');
             if (name && address) {
-              const ip = address.split(':')[0];
-              const port = address.split(':')[1] || '';
-              const received = parseInt(bytesReceived) || 0;
-              const sent = parseInt(bytesSent) || 0;
-              
-              // Calculate connection duration
-              let duration = 'unknown';
-              if (connectedSince) {
-                try {
-                  const connectDate = new Date(connectedSince);
-                  const now = new Date();
-                  const diffMs = now - connectDate;
-                  const diffMins = Math.floor(diffMs / 60000);
-                  const hours = Math.floor(diffMins / 60);
-                  const mins = diffMins % 60;
-                  duration = `${hours}h ${mins}m`;
-                } catch (e) {}
-              }
-              
-              clients.push({
-                clientName: name,
-                ip: ip,
-                port: port,
-                bytesReceived: received,
-                bytesSent: sent,
-                dataIn: received,
-                dataOut: sent,
-                connectedSince: connectedSince,
-                duration: duration
+              clientList.push({
+                name: name.trim(),
+                address: address.trim(),
+                realIP: address.trim().split(':')[0]
               });
             }
           }
         });
         
-        return res.json({ clients, total: clients.length });
-      }
-      
-      // Fallback to process check
-      exec('chroot /host ps aux | grep openvpn | grep -v grep', (error, stdout, stderr) => {
-        if (error && error.code !== 1) {
-          return res.status(500).json({ error: error.message });
+        // For each client in the list, verify they are actually connected
+        // by checking if their IP appears in the routing table or ARP
+        let verifiedClients = [];
+        let processedCount = 0;
+        let hasResponded = false; // Prevent multiple responses
+        
+        if (clientList.length === 0) {
+          return res.json({ clients: [], total: 0 });
         }
         
-        const processes = stdout.trim().split('\n').filter(line => line.trim()).map(line => {
-          const parts = line.trim().split(/\s+/);
-          return {
-            user: parts[0],
-            pid: parts[1],
-            cpu: parts[2],
-            mem: parts[3]
-          };
+        clientList.forEach((clientInfo) => {
+          // Get the original line data from the status file
+          const originalLine = lines.find(l => l.includes(clientInfo.name) && l.includes(clientInfo.address));
+          if (!originalLine) return;
+          
+          const parts = originalLine.split(',');
+          const received = parseInt(parts[2]) || 0;
+          const sent = parseInt(parts[3]) || 0;
+          const connectedSince = parts[4] || '';
+          
+          // Calculate connection duration
+          let duration = 'unknown';
+          if (connectedSince) {
+            try {
+              const connectDate = new Date(connectedSince);
+              const now = new Date();
+              const diffMs = now - connectDate;
+              const diffMins = Math.floor(diffMs / 60000);
+              const hours = Math.floor(diffMins / 60);
+              const mins = diffMins % 60;
+              duration = `${hours}h ${mins}m`;
+            } catch (e) {}
+          }
+          
+          // Check if "Last Ref" timestamp is recent (within last 2 minutes)
+          // This indicates the client is actively using the connection
+          const routingLine = lines.find(l => l.includes('ROUTING TABLE') || (l.includes(clientInfo.name) && l.includes(clientInfo.realIP))) || '';
+          let isActive = true;
+          
+          if (routingLine.includes('Last Ref')) {
+            try {
+              const lastRefMatch = routingLine.match(/Last Ref:?\s*(\w+ \w+ \d+ \d+:\d+:\d+ \d+)/);
+              if (lastRefMatch) {
+                const lastRefDate = new Date(lastRefMatch[1]);
+                const now = new Date();
+                const diffMs = now - lastRefDate;
+                const diffMinutes = diffMs / 60000;
+                
+                // If last activity was more than 2 minutes ago, consider inactive
+                if (diffMinutes > 2) {
+                  isActive = false;
+                  console.log(`Client ${clientInfo.name} appears inactive (last activity ${Math.floor(diffMinutes)} minutes ago)`);
+                }
+              }
+            } catch (e) {
+              // If we can't parse, assume active
+            }
+          }
+          
+          processedCount++;
+          
+          if (isActive) {
+            verifiedClients.push({
+              clientName: clientInfo.name,
+              ip: clientInfo.realIP,
+              port: clientInfo.address.split(':')[1] || '',
+              bytesReceived: received,
+              bytesSent: sent,
+              dataIn: received,
+              dataOut: sent,
+              connectedSince: connectedSince,
+              duration: duration
+            });
+          }
+          
+          // When all clients have been processed, return the results
+          if (processedCount === clientList.length && !hasResponded) {
+            hasResponded = true;
+            console.log(`OpenVPN clients: ${verifiedClients.length} active out of ${clientList.length} listed`);
+            return res.json({ clients: verifiedClients, total: verifiedClients.length });
+          }
         });
         
-        res.json({ clients: [], processes, total: processes.length });
-      });
+        // Set a timeout to return results even if verification takes too long
+        setTimeout(() => {
+          if (!hasResponded && verifiedClients.length > 0) {
+            hasResponded = true;
+            console.log(`Timeout: Returning ${verifiedClients.length} verified OpenVPN clients`);
+            return res.json({ clients: verifiedClients, total: verifiedClients.length });
+          }
+        }, 2000);
+      } else {
+        // Fallback to process check
+        exec('chroot /host ps aux | grep openvpn | grep -v grep', (error, stdout, stderr) => {
+          if (error && error.code !== 1) {
+            return res.status(500).json({ error: error.message });
+          }
+          
+          const processes = stdout.trim().split('\n').filter(line => line.trim()).map(line => {
+            const parts = line.trim().split(/\s+/);
+            return {
+              user: parts[0],
+              pid: parts[1],
+              cpu: parts[2],
+              mem: parts[3]
+            };
+          });
+          
+          res.json({ clients: [], processes, total: processes.length });
+        });
+      }
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1078,6 +1164,38 @@ app.get('/api/security/connections', requireAuth, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Terminate SSH session endpoint
+app.post('/api/security/ssh/terminate', requireAuth, (req, res) => {
+  try {
+    const { user, tty, password } = req.body;
+    
+    if (!password || password !== ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Invalid password', status: 'error' });
+    }
+    
+    if (!user || !tty) {
+      return res.status(400).json({ error: 'User and TTY are required', status: 'error' });
+    }
+    
+    const { exec } = require('child_process');
+    
+    // Kill the SSH session by TTY
+    exec(`chroot /host pkill -9 -t ${tty}`, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Error terminating SSH session:', error);
+        return res.status(500).json({ error: error.message, status: 'error' });
+      }
+      
+      res.json({ status: 'success', message: 'SSH session terminated successfully' });
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Terminate OpenVPN client endpoint - REMOVED
+// The front-end button remains but this endpoint has been disabled
 
 // Socket.IO authentication middleware
 io.use((socket, next) => {
@@ -1204,11 +1322,7 @@ setInterval(async () => {
   }
 }, 2000); // Update every 2 seconds
 
-// Start both HTTP and HTTPS servers
+// Start HTTP server (nginx handles SSL termination)
 httpServer.listen(HTTP_PORT, '0.0.0.0', () => {
   console.log(`HTTP server running on http://0.0.0.0:${HTTP_PORT}`);
-});
-
-httpsServer.listen(HTTPS_PORT, '0.0.0.0', () => {
-  console.log(`HTTPS server running on https://0.0.0.0:${HTTPS_PORT}`);
 });
