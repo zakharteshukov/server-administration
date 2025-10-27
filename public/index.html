@@ -1418,6 +1418,7 @@
         .security-content {
             border: 1px solid #333333;
             background: #111111;
+            min-height: 100px;
             max-height: 400px;
             overflow-y: auto;
         }
@@ -2546,6 +2547,9 @@
         // Security Dashboard functionality
         async function loadSecurityData(tab) {
             try {
+                const container = document.getElementById('security-content');
+                container.innerHTML = '<div style="padding: 2%; text-align: center; color: #888888;">Loading...</div>';
+                
                 const token = localStorage.getItem('adminToken');
                 let response;
                 
@@ -2569,6 +2573,12 @@
                     });
                 }
                 
+                if (!response.ok) {
+                    console.error(`Security API error: ${response.status} ${response.statusText}`);
+                    container.innerHTML = `<div style="padding: 2%; text-align: center; color: #ff6666;">Error loading data (${response.status})</div>`;
+                    return;
+                }
+                
                 if (response.status === 401) {
                     localStorage.removeItem('adminToken');
                     window.location.href = '/login';
@@ -2576,10 +2586,13 @@
                 }
                 
                 const data = await response.json();
+                console.log(`Security data for ${tab}:`, data);
                 updateSecurityDisplay(tab, data);
                 
             } catch (error) {
                 console.error('Error loading security data:', error);
+                const container = document.getElementById('security-content');
+                container.innerHTML = `<div style="padding: 2%; text-align: center; color: #ff6666;">Error: ${error.message}</div>`;
             }
         }
         
