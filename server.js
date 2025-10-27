@@ -865,28 +865,51 @@ app.get('/api/security/ssh', requireAuth, async (req, res) => {
       }
       
       const sessions = stdout.trim().split('\n').filter(line => line.trim()).map(line => {
-        // Parse "user tty date time (ip)" format
-        const match = line.trim().match(/^(\S+)\s+(\S+)\s+(.+?)\s+\((.+)\)$/);
+        // Parse different who output formats
+        line = line.trim();
+        
+        // Format: "user + tty date time idle ip"
+        if (line.includes('(') && line.includes(')')) {
+          const match = line.match(/^(\S+)\s+[\+\-]?\s*(\S+)\s+(.+?)\s+(.+?)\s+\((.+)\)$/);
+          if (match) {
+            return {
+              user: match[1],
+              tty: match[2],
+              loginDate: match[3],
+              loginTime: match[4],
+              idleTime: '00:00',
+              ip: match[5],
+              sessionDuration: calculateSessionDuration(match[3], match[4])
+            };
+          }
+        }
+        
+        // Format: "user tty date time ip"
+        const match = line.match(/^(\S+)\s+([^\s]+)\s+(\S+ \S+)\s+(\d{1,2}:\d{2})\s+\((.+)\)$/);
         if (match) {
           return {
             user: match[1],
             tty: match[2],
-            time: match[3],
-            ip: match[4],
-            hostname: ''
+            loginDate: match[3],
+            loginTime: match[4],
+            idleTime: '00:00',
+            ip: match[6],
+            sessionDuration: calculateSessionDuration(match[3], match[4])
           };
         }
         
-        // Fallback for other formats
+        // Fallback
         const parts = line.trim().split(/\s+/);
         return {
-          user: parts[0] || '',
-          tty: parts[1] || '',
-          time: parts.slice(2, -1).join(' ') || '',
+          user: parts[0] || 'unknown',
+          tty: parts[1] || 'unknown',
+          loginDate: parts[2] || '',
+          loginTime: parts[3] || '',
+          idleTime: parts[4] || '00:00',
           ip: parts[parts.length - 1]?.replace(/[()]/g, '') || 'localhost',
-          hostname: ''
+          sessionDuration: 'unknown'
         };
-      });
+      }).filter(s => s.user && s.tty && s.tty.includes('pts'));
       
       res.json({ sessions, total: sessions.length });
     });
@@ -895,46 +918,81 @@ app.get('/api/security/ssh', requireAuth, async (req, res) => {
   }
 });
 
+function calculateSessionDuration(dateStr, timeStr) {
+  try {
+    const now = new Date();
+    const date = new Date(dateStr + ' ' + timeStr);
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const hours = Math.floor(diffMins / 60);
+    const mins = diffMins % 60;
+    return `${hours}h ${mins}m`;
+  } catch (e) {
+    return 'unknown';
+  }
+}
+
 app.get('/api/security/openvpn', requireAuth, async (req, res) => {
   try {
     const { exec } = require('child_process');
     
-    // Try to read OpenVPN status file first (more detailed info)
+    // Read OpenVPN status file
     exec('docker exec openvpn-server cat /tmp/openvpn-status.log 2>/dev/null', (statusError, statusOut, statusErr) => {
       if (!statusError && statusOut) {
-        // Parse the status file
         const lines = statusOut.trim().split('\n');
-        const clientLines = [];
+        const clients = [];
         let inClientSection = false;
         
         lines.forEach(line => {
-          if (line.includes('CLIENT LIST') || line.includes('ROUTING TABLE')) {
-            inClientSection = line.includes('CLIENT LIST');
-          } else if (inClientSection && line && !line.includes('Updated,') && !line.includes('Common Name')) {
-            clientLines.push(line);
+          if (line.includes('CLIENT LIST')) {
+            inClientSection = true;
+            return;
+          }
+          if (line.includes('ROUTING TABLE')) {
+            inClientSection = false;
+            return;
+          }
+          if (inClientSection && line && !line.includes('Updated,') && !line.includes('Common Name')) {
+            const [name, address, bytesReceived, bytesSent, connectedSince] = line.split(',');
+            if (name && address) {
+              const ip = address.split(':')[0];
+              const port = address.split(':')[1] || '';
+              const received = parseInt(bytesReceived) || 0;
+              const sent = parseInt(bytesSent) || 0;
+              
+              // Calculate connection duration
+              let duration = 'unknown';
+              if (connectedSince) {
+                try {
+                  const connectDate = new Date(connectedSince);
+                  const now = new Date();
+                  const diffMs = now - connectDate;
+                  const diffMins = Math.floor(diffMs / 60000);
+                  const hours = Math.floor(diffMins / 60);
+                  const mins = diffMins % 60;
+                  duration = `${hours}h ${mins}m`;
+                } catch (e) {}
+              }
+              
+              clients.push({
+                clientName: name,
+                ip: ip,
+                port: port,
+                bytesReceived: received,
+                bytesSent: sent,
+                dataIn: received,
+                dataOut: sent,
+                connectedSince: connectedSince,
+                duration: duration
+              });
+            }
           }
         });
         
-        const clients = clientLines.map(line => {
-          const [name, address, bytesReceived, bytesSent, connectedSince] = line.split(',');
-          const ip = address.split(':')[0];
-          const port = address.split(':')[1] || '';
-          return {
-            clientName: name,
-            ip: ip,
-            port: port,
-            bytesReceived: parseInt(bytesReceived) || 0,
-            bytesSent: parseInt(bytesSent) || 0,
-            connectedSince: connectedSince || ''
-          };
-        }).filter(c => c.clientName);
-        
-        if (clients.length > 0) {
-          return res.json({ clients, processes: [], total: clients.length });
-        }
+        return res.json({ clients, total: clients.length });
       }
       
-      // Fallback to ps aux if status file not available
+      // Fallback to process check
       exec('chroot /host ps aux | grep openvpn | grep -v grep', (error, stdout, stderr) => {
         if (error && error.code !== 1) {
           return res.status(500).json({ error: error.message });
@@ -946,8 +1004,7 @@ app.get('/api/security/openvpn', requireAuth, async (req, res) => {
             user: parts[0],
             pid: parts[1],
             cpu: parts[2],
-            mem: parts[3],
-            command: parts.slice(10).join(' ')
+            mem: parts[3]
           };
         });
         

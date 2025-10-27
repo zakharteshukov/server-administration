@@ -2600,76 +2600,56 @@
             const container = document.getElementById('security-content');
             
             if (tab === 'ssh') {
-                if (data.sessions.length === 0) {
-                    container.innerHTML = '<div style="padding: 2%; text-align: center; color: #666666;">No SSH sessions</div>';
+                if (!data.sessions || data.sessions.length === 0) {
+                    container.innerHTML = '<div style="padding: 2%; text-align: center; color: #666666;">No active SSH sessions</div>';
                     return;
                 }
                 
                 const header = `
                     <div class="security-header">
                         <div>User</div>
-                        <div>TTY</div>
-                        <div>Time</div>
-                        <div>IP</div>
+                        <div>IP Address</div>
+                        <div>Duration</div>
+                        <div>Login Time</div>
                     </div>
                 `;
                 
                 const items = data.sessions.map(session => `
                     <div class="security-item">
                         <div class="security-value">${session.user}</div>
-                        <div class="security-value">${session.tty}</div>
-                        <div class="security-value">${session.time}</div>
                         <div class="security-value">${session.ip}</div>
+                        <div class="security-value">${session.sessionDuration}</div>
+                        <div class="security-value">${session.loginTime}</div>
                     </div>
                 `).join('');
                 
                 container.innerHTML = header + items;
                 
             } else if (tab === 'openvpn') {
-                // Check for client data first
-                if (data.clients && data.clients.length > 0) {
-                    const header = `
-                        <div class="security-header">
-                            <div>Client</div>
-                            <div>IP Address</div>
-                            <div>Bytes Received</div>
-                            <div>Connected Since</div>
-                        </div>
-                    `;
-                    
-                    const items = data.clients.map(client => `
-                        <div class="security-item">
-                            <div class="security-value">${client.clientName}</div>
-                            <div class="security-value">${client.ip}:${client.port}</div>
-                            <div class="security-value">${formatBytes(client.bytesReceived)}</div>
-                            <div class="security-value">${client.connectedSince}</div>
-                        </div>
-                    `).join('');
-                    
-                    container.innerHTML = header + items;
-                } else if (data.processes && data.processes.length > 0) {
-                    const header = `
-                        <div class="security-header">
-                            <div>User</div>
-                            <div>PID</div>
-                            <div>CPU</div>
-                            <div>Memory</div>
-                        </div>
-                    `;
-                    
-                    const items = data.processes.map(proc => `
-                        <div class="security-item">
-                            <div class="security-value">${proc.user}</div>
-                            <div class="security-value">${proc.pid}</div>
-                            <div class="security-value">${proc.cpu}%</div>
-                            <div class="security-value">${proc.mem}%</div>
-                        </div>
-                    `).join('');
-                    
-                    container.innerHTML = header + items;
-                } else {
-                    container.innerHTML = '<div style="padding: 2%; text-align: center; color: #666666;">No OpenVPN clients or processes running</div>';
+                if (!data.clients || data.clients.length === 0) {
+                    container.innerHTML = '<div style="padding: 2%; text-align: center; color: #666666;">No active OpenVPN clients</div>';
+                    return;
                 }
+                
+                const header = `
+                    <div class="security-header">
+                        <div>Client</div>
+                        <div>IP Address</div>
+                        <div>Duration</div>
+                        <div>Data (IN/OUT)</div>
+                    </div>
+                `;
+                
+                const items = data.clients.map(client => `
+                    <div class="security-item">
+                        <div class="security-value">${client.clientName}</div>
+                        <div class="security-value">${client.ip}</div>
+                        <div class="security-value">${client.duration}</div>
+                        <div class="security-value">${formatBytes(client.dataIn)} / ${formatBytes(client.dataOut)}</div>
+                    </div>
+                `).join('');
+                
+                container.innerHTML = header + items;
                 
             } else if (tab === 'connections') {
                 if (data.connections.length === 0) {
