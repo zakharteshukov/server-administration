@@ -1020,6 +1020,41 @@ app.get('/api/security/connections', requireAuth, async (req, res) => {
   try {
     const { exec } = require('child_process');
     
+    // Function to get process description based on process name and port
+    function getProcessDescription(processInfo, localAddr) {
+      const port = localAddr.split(':')[1] || '';
+      
+      // Extract process name from users:((process_name...
+      const procMatch = processInfo.match(/\("([^"]+)"/);
+      const processName = procMatch ? procMatch[1] : '';
+      
+      // Process-specific descriptions
+      if (processName.includes('sshd')) return 'SSH Server';
+      if (processName.includes('smbd')) return 'Samba File Sharing';
+      if (processName.includes('nmbd')) return 'Samba Name Service';
+      if (processName.includes('node')) {
+        if (port === '3443' || port === '3000' || port === '3001' || port === '3002') return 'System Monitor Server';
+        return 'Node.js Application';
+      }
+      if (processName.includes('nginx')) return 'Web Server';
+      if (processName.includes('apache')) return 'Web Server';
+      if (processName.includes('docker')) return 'Docker Engine';
+      if (processName.includes('postgres')) return 'PostgreSQL Database';
+      if (processName.includes('mysql')) return 'MySQL Database';
+      if (processName.includes('redis')) return 'Redis Cache';
+      
+      // Port-based descriptions for unknown processes
+      if (port === '22') return 'SSH Server';
+      if (port === '80') return 'HTTP Web Server';
+      if (port === '443') return 'HTTPS Web Server';
+      if (port === '3306') return 'MySQL Database';
+      if (port === '5432') return 'PostgreSQL Database';
+      if (port === '6379') return 'Redis';
+      if (port === '445') return 'SMB File Sharing';
+      
+      return processName || 'Unknown Process';
+    }
+    
     exec('chroot /host ss -tnp | grep -E "ESTAB|LISTEN"', (error, stdout, stderr) => {
       if (error) {
         return res.status(500).json({ error: error.message });
@@ -1027,11 +1062,13 @@ app.get('/api/security/connections', requireAuth, async (req, res) => {
       
       const connections = stdout.trim().split('\n').filter(line => line.trim()).map(line => {
         const parts = line.trim().split(/\s+/);
+        const processInfo = parts.slice(5).join(' ');
         return {
           state: parts[0],
           local: parts[3],
           peer: parts[4] || '',
-          process: parts.slice(5).join(' ')
+          process: processInfo,
+          description: getProcessDescription(processInfo, parts[3])
         };
       });
       

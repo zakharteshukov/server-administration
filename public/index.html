@@ -1445,7 +1445,7 @@
 
         .security-item {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
+            grid-template-columns: 2fr 1.5fr 1.5fr 1fr;
             padding: 10px 12px;
             border-bottom: 1px solid #222222;
             align-items: center;
@@ -1462,7 +1462,7 @@
 
         .security-header {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
+            grid-template-columns: 2fr 1.5fr 1.5fr 1fr;
             padding: 10px 12px;
             background: #333333;
             font-weight: bold;
@@ -1500,7 +1500,7 @@
 
             .security-item,
             .security-header {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 2fr 1fr;
                 font-size: 11px;
             }
         }
@@ -2662,19 +2662,19 @@
                 
                 const header = `
                     <div class="security-header">
-                        <div>State</div>
+                        <div>Description</div>
                         <div>Local</div>
                         <div>Peer</div>
-                        <div>Process</div>
+                        <div>State</div>
                     </div>
                 `;
                 
                 const items = data.connections.map(conn => `
                     <div class="security-item">
-                        <div class="security-value">${conn.state}</div>
+                        <div class="security-value">${conn.description || 'Unknown'}</div>
                         <div class="security-value">${conn.local}</div>
                         <div class="security-value">${conn.peer || 'N/A'}</div>
-                        <div class="security-value">${conn.process || 'N/A'}</div>
+                        <div class="security-value">${conn.state}</div>
                     </div>
                 `).join('');
                 
