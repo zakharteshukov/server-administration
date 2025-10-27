@@ -899,23 +899,60 @@ app.get('/api/security/openvpn', requireAuth, async (req, res) => {
   try {
     const { exec } = require('child_process');
     
-    exec('chroot /host ps aux | grep openvpn | grep -v grep', (error, stdout, stderr) => {
-      if (error && error.code !== 1) {
-        return res.status(500).json({ error: error.message });
+    // Try to read OpenVPN status file first (more detailed info)
+    exec('docker exec openvpn-server cat /tmp/openvpn-status.log 2>/dev/null', (statusError, statusOut, statusErr) => {
+      if (!statusError && statusOut) {
+        // Parse the status file
+        const lines = statusOut.trim().split('\n');
+        const clientLines = [];
+        let inClientSection = false;
+        
+        lines.forEach(line => {
+          if (line.includes('CLIENT LIST') || line.includes('ROUTING TABLE')) {
+            inClientSection = line.includes('CLIENT LIST');
+          } else if (inClientSection && line && !line.includes('Updated,') && !line.includes('Common Name')) {
+            clientLines.push(line);
+          }
+        });
+        
+        const clients = clientLines.map(line => {
+          const [name, address, bytesReceived, bytesSent, connectedSince] = line.split(',');
+          const ip = address.split(':')[0];
+          const port = address.split(':')[1] || '';
+          return {
+            clientName: name,
+            ip: ip,
+            port: port,
+            bytesReceived: parseInt(bytesReceived) || 0,
+            bytesSent: parseInt(bytesSent) || 0,
+            connectedSince: connectedSince || ''
+          };
+        }).filter(c => c.clientName);
+        
+        if (clients.length > 0) {
+          return res.json({ clients, processes: [], total: clients.length });
+        }
       }
       
-      const processes = stdout.trim().split('\n').filter(line => line.trim()).map(line => {
-        const parts = line.trim().split(/\s+/);
-        return {
-          user: parts[0],
-          pid: parts[1],
-          cpu: parts[2],
-          mem: parts[3],
-          command: parts.slice(10).join(' ')
-        };
+      // Fallback to ps aux if status file not available
+      exec('chroot /host ps aux | grep openvpn | grep -v grep', (error, stdout, stderr) => {
+        if (error && error.code !== 1) {
+          return res.status(500).json({ error: error.message });
+        }
+        
+        const processes = stdout.trim().split('\n').filter(line => line.trim()).map(line => {
+          const parts = line.trim().split(/\s+/);
+          return {
+            user: parts[0],
+            pid: parts[1],
+            cpu: parts[2],
+            mem: parts[3],
+            command: parts.slice(10).join(' ')
+          };
+        });
+        
+        res.json({ clients: [], processes, total: processes.length });
       });
-      
-      res.json({ processes, total: processes.length });
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
