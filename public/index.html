@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Server Administration Dashboard - Real-time system monitoring with Docker container management and system service controls">
+    <meta name="description" content="Server Administration Dashboard - Real-time system monitoring with Docker container management">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -652,12 +652,12 @@
 
         .docker-container {
             display: grid;
-            grid-template-columns: minmax(180px, 200px) minmax(250px, 2fr) minmax(165px, 180px) minmax(170px, 190px);
+            grid-template-columns: minmax(180px, 200px) minmax(300px, 2.5fr) minmax(165px, 180px) minmax(170px, 190px);
             padding: 8px 12px;
             border-bottom: 1px solid #222222;
             align-items: center;
             font-size: 12px;
-            min-width: 965px;
+            min-width: 1115px;
         }
 
         .docker-container > div {
@@ -679,7 +679,7 @@
 
         .docker-header {
             display: grid;
-            grid-template-columns: minmax(180px, 200px) minmax(250px, 2fr) minmax(165px, 180px) minmax(170px, 190px);
+            grid-template-columns: minmax(180px, 200px) minmax(300px, 2.5fr) minmax(165px, 180px) minmax(170px, 190px);
             padding: 8px 12px;
             background: #333333;
             font-weight: bold;
@@ -733,8 +733,7 @@
             align-items: center;
         }
 
-        .docker-btn,
-        .service-btn {
+        .docker-btn {
             padding: 2px 10px;
             font-size: 11px;
             border: 1px solid #333333;
@@ -776,166 +775,6 @@
             background: #666600;
         }
 
-        /* System Services Section */
-        .services-summary {
-            display: flex;
-            flex-direction: row;
-            gap: 2%;
-            margin-bottom: 1%;
-        }
-        
-        .services-summary .metric {
-            flex: 1;
-            box-sizing: border-box;
-        }
-        
-        @media (max-width: 768px) {
-            .services-summary {
-                flex-direction: row;
-                gap: 1%;
-            }
-        }
-
-        .services-list {
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid #333333;
-            background: #111111;
-        }
-
-        .service-item {
-            display: grid;
-            grid-template-columns: 2fr auto;
-            gap: 1%;
-            padding: 1%;
-            border-bottom: 1px solid #222222;
-            align-items: center;
-            font-size: 12px;
-        }
-
-        .service-item:last-child {
-            border-bottom: none;
-        }
-
-        .service-item:hover {
-            background: #222222;
-        }
-
-        .service-header {
-            display: grid;
-            grid-template-columns: 2fr auto;
-            gap: 1%;
-            padding: 1%;
-            background: #333333;
-            font-weight: bold;
-            font-size: 12px;
-            border-bottom: 1px solid #444444;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .service-name {
-            color: #ffffff;
-            font-weight: bold;
-        }
-        
-        .service-name-container {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        
-        .service-description {
-            color: #999999;
-            font-size: 10px;
-            font-weight: normal;
-            font-style: italic;
-        }
-
-
-        .service-uptime {
-            color: #cccccc;
-            font-size: 11px;
-        }
-
-        .service-controls {
-            display: flex;
-            gap: 5px;
-            justify-content: flex-end;
-        }
-
-        .service-btn:hover,
-        .docker-btn:hover {
-            background: #333333;
-            border-color: #444444;
-        }
-
-        .service-btn.start {
-            background: #004400;
-            border-color: #006600;
-        }
-
-        .service-btn.start:hover {
-            background: #006600;
-        }
-
-        .service-btn.stop {
-            background: #440000;
-            border-color: #660000;
-        }
-
-        .service-btn.stop:hover {
-            background: #660000;
-        }
-
-        .service-btn.restart {
-            background: #444400;
-            border-color: #666600;
-        }
-
-        .service-btn.restart:hover {
-            background: #666600;
-        }
-
-        /* Responsive Services Section */
-        @media (max-width: 768px) {
-            .services-summary {
-                flex-direction: row;
-                gap: 1%;
-            }
-            
-            .service-item,
-            .service-header {
-                grid-template-columns: 1.5fr 1fr;
-                gap: 0.5%;
-                padding: 2%;
-            }
-            
-            .service-item > div,
-            .service-header > div {
-                padding: 1%;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .services-list {
-                max-height: 300px;
-            }
-            
-            .service-item {
-                font-size: 11px;
-            }
-            
-            .service-header {
-                font-size: 11px;
-            }
-            
-            .service-description {
-                font-size: 9px;
-            }
-        }
-
         /* Responsive Docker Section */
         @media (max-width: 768px) {
             .docker-summary {
@@ -974,7 +813,6 @@
         
         /* Touch target optimization - minimum 44x44px for mobile */
         .docker-btn,
-        .service-btn,
         .terminal-tab,
         .terminal-add-tab-btn {
             min-height: 44px;
@@ -988,15 +826,13 @@
         
         @media (min-width: 769px) {
             /* Desktop buttons - reduced height */
-            .docker-btn,
-            .service-btn {
+            .docker-btn {
                 min-height: auto;
             }
         }
         
         @media (max-width: 480px) {
-            .docker-btn,
-            .service-btn {
+            .docker-btn {
                 padding: 12px 16px;
                 font-size: 14px;
             }
@@ -1064,8 +900,7 @@
         
         /* Button text should not wrap on very small screens */
         @media (max-width: 360px) {
-            .docker-btn,
-            .service-btn {
+            .docker-btn {
                 font-size: 12px;
                 padding: 10px 12px;
                 white-space: nowrap;
@@ -1120,8 +955,7 @@
         }
         
         /* Improve table/list scrolling on mobile */
-        .docker-containers,
-        .services-list {
+        .docker-containers {
             -webkit-overflow-scrolling: touch;
         }
         
@@ -1210,28 +1044,24 @@
         }
         
         /* Summary sections should stack on mobile */
-        .docker-summary,
-        .services-summary {
+        .docker-summary {
             gap: 10px;
         }
         
         @media (max-width: 480px) {
-            .docker-summary,
-            .services-summary {
+            .docker-summary {
                 gap: 8px;
             }
         }
         
-        /* Prevent overflow in service/container names */
-        .docker-name,
-        .service-name {
+        /* Prevent overflow in container names */
+        .docker-name {
             word-break: break-word;
             overflow-wrap: break-word;
         }
         
         @media (max-width: 480px) {
-            .docker-name,
-            .service-name {
+            .docker-name {
                 font-size: 0.85rem;
             }
         }
@@ -1251,12 +1081,6 @@
             }
         }
         
-        /* Improve readability for descriptions */
-        .service-description {
-            overflow-wrap: break-word;
-            word-wrap: break-word;
-        }
-
         /* File Manager Styles */
         .file-manager-controls {
             display: flex;
@@ -1445,7 +1269,7 @@
 
         .security-item {
             display: grid;
-            grid-template-columns: 2fr 1.5fr 1.5fr 1fr;
+            grid-template-columns: 2fr 1.5fr 1.5fr 120px;
             padding: 10px 12px;
             border-bottom: 1px solid #222222;
             align-items: center;
@@ -1462,7 +1286,7 @@
 
         .security-header {
             display: grid;
-            grid-template-columns: 2fr 1.5fr 1.5fr 1fr;
+            grid-template-columns: 2fr 1.5fr 1.5fr 120px;
             padding: 10px 12px;
             background: #333333;
             font-weight: bold;
@@ -1471,6 +1295,23 @@
             position: sticky;
             top: 0;
             z-index: 10;
+        }
+        
+        .security-terminate-btn {
+            padding: 4px 10px;
+            background: #440000;
+            border: 1px solid #660000;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 11px;
+            font-family: 'Courier New', 'Monaco', monospace;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .security-terminate-btn:hover {
+            background: #660000;
+            border-color: #880000;
         }
 
         .security-value {
@@ -1511,7 +1352,6 @@
     <div class="container">
         <div class="header">
             <h1>SERVER ADMINISTRATION</h1>
-            <p>Real-time system monitoring with root terminal access</p>
         </div>
 
         <div class="dashboard">
@@ -1630,28 +1470,6 @@
             </div>
             <div class="docker-containers" id="docker-containers">
                 <!-- Docker containers will be populated here -->
-            </div>
-        </div>
-
-        <!-- System Services -->
-        <div class="card">
-            <h2>SYSTEM SERVICES</h2>
-            <div class="services-summary">
-                <div class="metric">
-                    <span class="metric-label">Total:</span>
-                    <span class="metric-value" id="total-services">0</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Active:</span>
-                    <span class="metric-value" id="active-services">0</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Inactive:</span>
-                    <span class="metric-value" id="inactive-services">0</span>
-                </div>
-            </div>
-            <div class="services-list" id="services-list">
-                <!-- System services will be populated here -->
             </div>
         </div>
 
@@ -2065,6 +1883,74 @@
             }
         }
         
+        // Get access information for a container
+        function getAccessInfo(containerName, ports) {
+            const accessMap = {
+                'code-server': {
+                    web: 'http://192.168.255.1:8080',
+                    cli: 'docker exec -it code-server bash'
+                },
+                'jellyfin': {
+                    web: 'http://192.168.255.1:8096',
+                    cli: 'docker exec -it jellyfin bash'
+                },
+                'ollama': {
+                    web: 'http://192.168.255.1:11434',
+                    api: 'curl http://localhost:11434/api/tags',
+                    cli: 'docker exec -it ollama ollama run llama2'
+                },
+                'pihole': {
+                    web: 'http://192.168.255.1:81',
+                    cli: 'docker exec -it pihole bash'
+                },
+                'openvpn-server': {
+                    web: 'N/A',
+                    cli: 'docker exec -it openvpn-server bash'
+                },
+                'system-monitor': {
+                    web: 'http://192.168.255.1:3000',
+                    cli: 'docker exec -it system-monitor bash'
+                },
+                'FRC10951-SITE': {
+                    web: 'http://192.168.255.1:3001',
+                    cli: 'docker exec -it FRC10951-SITE bash'
+                },
+                'GENERAL-SITE': {
+                    web: 'http://192.168.255.1:3002',
+                    cli: 'docker exec -it GENERAL-SITE bash'
+                }
+            };
+            
+            const accessInfo = accessMap[containerName] || {};
+            let result = '<div style="font-size: 11px; line-height: 1.4;">';
+            
+            // Display web URL if available
+            if (accessInfo.web) {
+                if (accessInfo.web === 'N/A') {
+                    result += '<span style="color: #666;">No web access</span>';
+                } else {
+                    result += `<a href="${accessInfo.web}" target="_blank" style="color: #4CAF50; text-decoration: none; word-break: break-all;">${accessInfo.web}</a>`;
+                }
+            }
+            
+            // Display CLI command
+            if (accessInfo.cli) {
+                result += `<br><span style="color: #999; font-family: monospace; font-size: 10px;">${accessInfo.cli}</span>`;
+            } else if (accessInfo.api) {
+                result += `<br><span style="color: #999; font-family: monospace; font-size: 10px;">${accessInfo.api}</span>`;
+            }
+            
+            // If no specific mapping, show ports
+            if (!accessInfo.web && !accessInfo.cli && ports && ports !== 'No ports') {
+                result += `<span style="color: #888; font-family: monospace;">${ports.substring(0, 50)}</span>`;
+            } else if (!accessInfo.web && !accessInfo.cli) {
+                result += '<span style="color: #666;">No access info</span>';
+            }
+            
+            result += '</div>';
+            return result;
+        }
+        
         // Update Docker containers display
         function updateDockerContainers(containers) {
             const container = document.getElementById('docker-containers');
@@ -2079,7 +1965,7 @@
             header.className = 'docker-header';
             header.innerHTML = `
                 <div>Name</div>
-                <div>Image</div>
+                <div>Access</div>
                 <div>Uptime</div>
                 <div>Controls</div>
             `;
@@ -2107,10 +1993,13 @@
                     `;
                 }
                 
+                // Get access info based on container name/ports
+                const accessInfo = getAccessInfo(container.name, container.ports);
+                
                 return `
                     <div class="docker-container">
                         <div class="docker-name">${container.name}</div>
-                        <div class="docker-image">${container.image}</div>
+                        <div class="docker-image">${accessInfo}</div>
                         <div class="docker-uptime">${uptimeDisplay}</div>
                         <div class="docker-controls">
                             ${buttons}
@@ -2121,182 +2010,6 @@
             
             container.innerHTML = header.outerHTML + containerRows;
         }
-        
-        // Load system services data
-        async function loadServicesData() {
-            try {
-                const token = localStorage.getItem('adminToken');
-                const response = await fetch('/api/services', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                
-                if (response.status === 401) {
-                    localStorage.removeItem('adminToken');
-                    window.location.href = '/login';
-                    return;
-                }
-                
-                const data = await response.json();
-                
-                // Update summary metrics
-                document.getElementById('total-services').textContent = data.totalServices;
-                document.getElementById('active-services').textContent = data.activeServices;
-                document.getElementById('inactive-services').textContent = data.inactiveServices;
-                
-                // Update services list
-                updateServicesList(data.services);
-                
-            } catch (error) {
-                console.error('Error loading services data:', error);
-            }
-        }
-        
-        // Update services list display
-        function updateServicesList(services) {
-            const container = document.getElementById('services-list');
-            
-            // Filter out services that are just bullet points or have no proper name
-            const filteredServices = services.filter(service => {
-                if (!service.name || service.name.trim() === '') return false;
-                
-                // Remove services with special characters or dots as the name
-                const cleanName = service.name.trim();
-                if (cleanName === '●' || cleanName === '•' || cleanName === '.' || cleanName === '·') return false;
-                if (cleanName.startsWith('●') || cleanName.startsWith('•') || cleanName.startsWith('·')) return false;
-                if (cleanName.length < 2) return false;
-                if (cleanName === 'UNIT' || cleanName === 'LOAD' || cleanName === 'ACTIVE' || cleanName === 'SUB') return false;
-                
-                // Additional filtering for minimalistic display
-                // Exclude some system-level services for cleaner view
-                const excludedPatterns = [
-                    /^systemd/,
-                    /^dbus\.org/,
-                    /^user@\d+/,
-                    /^session-\d+/,
-                    /^getty@/,
-                    /^systemd-logind/,
-                    /^systemd-networkd/,
-                    /^systemd-resolved/,
-                    /^dev-/
-                ];
-                
-                for (const pattern of excludedPatterns) {
-                    if (pattern.test(cleanName)) {
-                        return false;
-                    }
-                }
-                
-                return true;
-            });
-            
-            if (filteredServices.length === 0) {
-                container.innerHTML = '<div style="padding: 2%; text-align: center; color: #666666;">No system services found</div>';
-                return;
-            }
-            
-            // Sort services: active first, then inactive
-            filteredServices.sort((a, b) => {
-                if (a.status === 'active' && b.status !== 'active') return -1;
-                if (a.status !== 'active' && b.status === 'active') return 1;
-                return a.name.localeCompare(b.name); // Alphabetical within each group
-            });
-            
-            // Create header
-            const header = document.createElement('div');
-            header.className = 'service-header';
-            header.innerHTML = `
-                <div>Service</div>
-                <div>Controls</div>
-            `;
-            
-            // Create service rows
-            const serviceRows = filteredServices.map(service => {
-                const isActive = service.status === 'active';
-                
-                // Escape service name for use in onclick attribute
-                const escapedServiceName = service.name.replace(/'/g, "\\'");
-                
-                // Determine which buttons to show based on status
-                let buttons = '';
-                if (isActive) {
-                    buttons = `
-                        <button class="service-btn stop" onclick="controlService('${escapedServiceName}', 'stop')">Stop</button>
-                        <button class="service-btn restart" onclick="controlService('${escapedServiceName}', 'restart')">Restart</button>
-                    `;
-                } else {
-                    buttons = `
-                        <button class="service-btn start" onclick="controlService('${escapedServiceName}', 'start')">Start</button>
-                    `;
-                }
-                
-                // Format uptime display
-                let uptimeDisplay = service.uptime;
-                if (service.status === 'active' && service.uptime === 'Running') {
-                    uptimeDisplay = 'Active';
-                } else if (service.status === 'inactive') {
-                    uptimeDisplay = 'Inactive';
-                }
-                
-                const description = service.description ? `<div class="service-description">${service.description}</div>` : '';
-                
-                return `
-                    <div class="service-item">
-                        <div class="service-name-container">
-                            <div class="service-name">${service.name}</div>
-                            ${description}
-                        </div>
-                        <div class="service-controls">
-                            ${buttons}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            container.innerHTML = header.outerHTML + serviceRows;
-        }
-        
-        // Service control function (global scope)
-        function controlService(serviceName, action) {
-            const password = prompt(`Enter password to ${action} service '${serviceName}':`);
-            if (password === null) return; // User cancelled
-            
-            const token = localStorage.getItem('adminToken');
-            fetch(`/api/services/${action}`, { 
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ 
-                    service: serviceName,
-                    password: password 
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(data => {
-                        throw new Error(data.error || `HTTP error! status: ${response.status}`);
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.status === 'success') {
-                    alert(`Service '${serviceName}' ${action} initiated successfully.`);
-                    // Refresh services data after a short delay
-                    setTimeout(loadServicesData, 2000);
-                } else {
-                    alert('Error: ' + (data.error || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert(`Failed to ${action} service.`);
-            });
-        }
-        
         // Real-time updates via WebSocket
         socket.on('system:update', (data) => {
             try {
@@ -2346,12 +2059,10 @@
         // Load initial data
         loadSystemData();
         loadDockerData();
-        loadServicesData();
         
         // Set up periodic updates
         setInterval(loadSystemData, 5000); // Update system data every 5 seconds
         setInterval(loadDockerData, 10000); // Update Docker data every 10 seconds
-        setInterval(loadServicesData, 15000); // Update services data every 15 seconds
         }
         
         // Container control function (global scope)
@@ -2590,6 +2301,13 @@
                 
                 const data = await response.json();
                 console.log(`Security data for ${tab}:`, data);
+                
+                // Additional debugging for OpenVPN
+                if (tab === 'openvpn') {
+                    console.log('OpenVPN clients:', data.clients);
+                    console.log('Total clients:', data.total);
+                }
+                
                 updateSecurityDisplay(tab, data);
                 
             } catch (error) {
@@ -2613,16 +2331,18 @@
                         <div>User</div>
                         <div>IP Address</div>
                         <div>Duration</div>
-                        <div>Login Time</div>
+                        <div>Actions</div>
                     </div>
                 `;
                 
-                const items = data.sessions.map(session => `
+                const items = data.sessions.map((session, index) => `
                     <div class="security-item">
                         <div class="security-value">${session.user}</div>
                         <div class="security-value">${session.ip}</div>
                         <div class="security-value">${session.sessionDuration}</div>
-                        <div class="security-value">${session.loginTime}</div>
+                        <div>
+                            <button class="security-terminate-btn" onclick="terminateSSHSession('${session.user}', '${session.tty}')">Terminate</button>
+                        </div>
                     </div>
                 `).join('');
                 
@@ -2639,18 +2359,27 @@
                         <div>Client</div>
                         <div>IP Address</div>
                         <div>Duration</div>
-                        <div>Data (IN/OUT)</div>
+                        <div>Actions</div>
                     </div>
                 `;
                 
-                const items = data.clients.map(client => `
-                    <div class="security-item">
-                        <div class="security-value">${client.clientName}</div>
-                        <div class="security-value">${client.ip}</div>
-                        <div class="security-value">${client.duration}</div>
-                        <div class="security-value">${formatBytes(client.dataIn)} / ${formatBytes(client.dataOut)}</div>
-                    </div>
-                `).join('');
+                const items = data.clients.map(client => {
+                    // Ensure client data is valid
+                    const clientName = client.clientName || 'Unknown';
+                    const ip = client.ip || 'Unknown';
+                    const duration = client.duration || 'Unknown';
+                    
+                    return `
+                        <div class="security-item">
+                            <div class="security-value">${clientName}</div>
+                            <div class="security-value">${ip}</div>
+                            <div class="security-value">${duration}</div>
+                            <div>
+                                <button class="security-terminate-btn" onclick="terminateOpenVPNClient('${clientName}')">Terminate</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
                 
                 container.innerHTML = header + items;
                 
@@ -2692,6 +2421,72 @@
             event.target.classList.add('active');
             
             loadSecurityData(tab);
+        }
+        
+        // Terminate SSH session
+        function terminateSSHSession(user, tty) {
+            if (!confirm(`Terminate SSH session for user '${user}' on ${tty}?`)) {
+                return;
+            }
+            
+            const password = prompt('Enter password to terminate SSH session:');
+            if (password === null) return;
+            
+            const token = localStorage.getItem('adminToken');
+            fetch('/api/security/ssh/terminate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ user, tty, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('SSH session terminated successfully.');
+                    loadSecurityData('ssh');
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to terminate SSH session.');
+            });
+        }
+        
+        // Terminate OpenVPN client
+        function terminateOpenVPNClient(clientName) {
+            if (!confirm(`Disconnect OpenVPN client '${clientName}'?`)) {
+                return;
+            }
+            
+            const password = prompt('Enter password to disconnect OpenVPN client:');
+            if (password === null) return;
+            
+            const token = localStorage.getItem('adminToken');
+            fetch('/api/security/openvpn/terminate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ clientName, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('OpenVPN client disconnected successfully.');
+                    loadSecurityData('openvpn');
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to disconnect OpenVPN client.');
+            });
         }
     </script>
 </body>
