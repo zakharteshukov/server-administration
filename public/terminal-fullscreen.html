@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Terminal - Fullscreen</title>
+    <link rel="icon" type="image/jpeg" href="/favicon.jpg">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', 'Monaco', monospace;
+            background: #000000;
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .terminal-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            background: #000000;
+        }
+
+        .terminal-header {
+            background: #111111;
+            border-bottom: 1px solid #333333;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 50px;
+            flex-shrink: 0;
+        }
+
+        .terminal-header h1 {
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: normal;
+        }
+
+        .terminal-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .exit-btn {
+            background: #222222;
+            border: 1px solid #333333;
+            color: #ffffff;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Courier New', 'Monaco', monospace;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            min-height: 36px;
+        }
+
+        .exit-btn:hover {
+            background: #333333;
+            border-color: #555555;
+        }
+
+        .terminal-tabs {
+            display: flex;
+            border-bottom: 1px solid #333333;
+            background: #111111;
+            overflow-x: auto;
+            padding: 0 10px;
+            height: 40px;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .terminal-tabs-container {
+            display: flex;
+            overflow-x: auto;
+            flex: 1;
+            gap: 4px;
+        }
+
+        .terminal-tab {
+            padding: 6px 12px;
+            background: #222222;
+            border: 1px solid #333333;
+            border-bottom: none;
+            color: #cccccc;
+            cursor: pointer;
+            font-size: 12px;
+            white-space: nowrap;
+            border-radius: 4px 4px 0 0;
+            flex-shrink: 0;
+        }
+
+        .terminal-tab:hover {
+            background: #2a2a2a;
+        }
+
+        .terminal-tab.active {
+            background: #000000;
+            color: #ffffff;
+        }
+
+        .terminal-tab-close {
+            margin-left: 8px;
+            color: #888888;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .terminal-tab-close:hover {
+            color: #ffffff;
+        }
+
+        .terminal-add-btn {
+            padding: 6px 12px;
+            background: #222222;
+            border: 1px solid #333333;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .terminal-add-btn:hover {
+            background: #2a2a2a;
+        }
+
+        .terminal-content {
+            flex: 1;
+            background: #000000;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #terminal {
+            height: 100%;
+            width: 100%;
+        }
+
+        @media (max-width: 480px) {
+            .terminal-header {
+                padding: 8px 12px;
+                height: 45px;
+            }
+
+            .terminal-header h1 {
+                font-size: 14px;
+            }
+
+            .exit-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .terminal-tabs {
+                height: 35px;
+            }
+
+            .terminal-tab {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal-wrapper">
+        <div class="terminal-header">
+            <h1>FULLSCREEN TERMINAL</h1>
+            <div class="terminal-controls">
+                <button class="exit-btn" onclick="exitFullscreen()">Exit</button>
+            </div>
+        </div>
+        <div class="terminal-tabs" id="terminal-tabs"></div>
+        <div class="terminal-content" id="terminal-content"></div>
+    </div>
+
+    <script>
+        // Check authentication on page load
+        window.addEventListener('load', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token') || localStorage.getItem('adminToken');
+            
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            // Store token in localStorage for later use
+            localStorage.setItem('adminToken', token);
+            
+            // Initialize Socket.IO connection with authentication
+            const socket = io({
+                auth: {
+                    token: token
+                }
+            });
+            
+            // Handle authentication errors
+            socket.on('connect_error', (error) => {
+                console.error('Socket connection error:', error);
+                if (error.message === 'Authentication failed') {
+                    localStorage.removeItem('adminToken');
+                    window.location.href = '/login';
+                }
+            });
+            
+            socket.on('connect', () => {
+                console.log('Fullscreen terminal connected');
+                initializeFullscreenTerminal(socket);
+            });
+        });
+        
+        function initializeFullscreenTerminal(socket) {
+            let terminals = new Map();
+            let activeTabId = null;
+            let tabCounter = 1;
+            
+            // Create terminal tab
+            function createTerminalTab() {
+                const tabId = `terminal-${tabCounter++}`;
+                const tabNumber = tabCounter - 1;
+                
+                // Create tab element
+                const tabsContainer = document.getElementById('terminal-tabs');
+                const tabElement = document.createElement('div');
+                tabElement.className = 'terminal-tab active';
+                tabElement.id = `tab-${tabId}`;
+                tabElement.innerHTML = `
+                    <span class="tab-title">Terminal ${tabNumber}</span>
+                    <span class="terminal-tab-close" onclick="closeTab('${tabId}', event)">×</span>
+                `;
+                tabElement.onclick = (e) => {
+                    if (e.target.className !== 'terminal-tab-close') {
+                        switchTab(tabId);
+                    }
+                };
+                
+                // Add before the add button
+                const addBtn = document.querySelector('.terminal-add-btn');
+                if (addBtn) {
+                    tabsContainer.insertBefore(tabElement, addBtn);
+                } else {
+                    tabsContainer.appendChild(tabElement);
+                }
+                
+                // Create terminal instance
+                const terminalDiv = document.createElement('div');
+                terminalDiv.id = tabId;
+                terminalDiv.style.display = activeTabId ? 'none' : 'block';
+                terminalDiv.style.width = '100%';
+                terminalDiv.style.height = '100%';
+                
+                const terminal = new Terminal({
+                    theme: {
+                        background: '#000000',
+                        foreground: '#ffffff',
+                        cursor: '#ffffff',
+                        selection: '#333333'
+                    },
+                    fontSize: 13,
+                    fontFamily: 'Courier New, Monaco, monospace',
+                    cols: 120,
+                    rows: 30,
+                    scrollback: 1000,
+                    allowTransparency: false,
+                    cursorBlink: true,
+                    cursorStyle: 'block'
+                });
+                
+                const fitAddon = new FitAddon.FitAddon();
+                terminal.loadAddon(fitAddon);
+                
+                document.getElementById('terminal-content').appendChild(terminalDiv);
+                terminal.open(document.getElementById(tabId));
+                fitAddon.fit();
+                
+                // Terminal input handler
+                terminal.onData(data => {
+                    if (activeTabId === tabId) {
+                        socket.emit('terminal:input', {
+                            data: data,
+                            tabId: tabId,
+                            sessionId: tabId
+                        });
+                    }
+                });
+                
+                terminals.set(tabId, { terminal, fitAddon, tabElement, tabId });
+                
+                if (!activeTabId) {
+                    activeTabId = tabId;
+                }
+                
+                // Initialize terminal session with tabId for routing
+                socket.emit('terminal:create', { 
+                    cols: 120, 
+                    rows: 30,
+                    tabId: tabId,
+                    sessionId: tabId
+                });
+                
+                return tabId;
+            }
+            
+            // Switch between tabs
+            window.switchTab = function(tabId) {
+                const oldTab = terminals.get(activeTabId);
+                const newTab = terminals.get(tabId);
+                
+                if (oldTab) {
+                    oldTab.tabElement.classList.remove('active');
+                    document.getElementById(activeTabId).style.display = 'none';
+                }
+                
+                if (newTab) {
+                    newTab.tabElement.classList.add('active');
+                    document.getElementById(tabId).style.display = 'block';
+                    activeTabId = tabId;
+                    newTab.terminal.focus();
+                    
+                    setTimeout(() => {
+                        newTab.fitAddon.fit();
+                        const { cols, rows } = newTab.terminal;
+                        socket.emit('terminal:resize', { 
+                            cols, 
+                            rows,
+                            tabId: tabId,
+                            sessionId: tabId
+                        });
+                    }, 100);
+                }
+            };
+            
+            // Close tab
+            window.closeTab = function(tabId, event) {
+                event.stopPropagation();
+                
+                if (terminals.size <= 1) {
+                    return;
+                }
+                
+                const tab = terminals.get(tabId);
+                if (!tab) return;
+                
+                if (activeTabId === tabId) {
+                    const otherTabs = Array.from(terminals.keys()).filter(id => id !== tabId);
+                    if (otherTabs.length > 0) {
+                        switchTab(otherTabs[0]);
+                    }
+                }
+                
+                tab.terminal.dispose();
+                document.getElementById(tabId).remove();
+                tab.tabElement.remove();
+                terminals.delete(tabId);
+            };
+            
+            // Handle resize
+            window.addEventListener('resize', () => {
+                terminals.forEach(({ terminal, fitAddon, tabId }) => {
+                    fitAddon.fit();
+                    const { cols, rows } = terminal;
+                    socket.emit('terminal:resize', { 
+                        cols, 
+                        rows,
+                        tabId: tabId,
+                        sessionId: tabId
+                    });
+                });
+            });
+            
+            // Socket handlers
+            socket.on('terminal:data', (message) => {
+                const tabId = message.tabId || activeTabId;
+                if (tabId && terminals.has(tabId)) {
+                    terminals.get(tabId).terminal.write(message.data);
+                }
+            });
+            
+            socket.on('terminal:created', (data) => {
+                const tabId = data.tabId;
+                if (tabId && terminals.has(tabId)) {
+                    const tab = terminals.get(tabId);
+                    if (activeTabId === tabId) {
+                        tab.terminal.focus();
+                    }
+                }
+            });
+            
+            socket.on('terminal:exit', (message) => {
+                const tabId = message.tabId || activeTabId;
+                if (tabId && terminals.has(tabId)) {
+                    const tab = terminals.get(tabId);
+                    tab.terminal.write('\r\nTerminal session ended.\r\n');
+                }
+            });
+            
+            // Create add button
+            const tabsContainer = document.getElementById('terminal-tabs');
+            const addBtn = document.createElement('button');
+            addBtn.className = 'terminal-add-btn';
+            addBtn.innerHTML = '+';
+            addBtn.title = 'New Terminal';
+            addBtn.onclick = () => createTerminalTab();
+            tabsContainer.appendChild(addBtn);
+            
+            // Create first terminal
+            createTerminalTab();
+            
+            // Handle keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.key === 't') {
+                    e.preventDefault();
+                    createTerminalTab();
+                }
+                if (e.key === 'Escape') {
+                    exitFullscreen();
+                }
+            });
+        }
+        
+        function exitFullscreen() {
+            const token = localStorage.getItem('adminToken');
+            if (token) {
+                window.location.href = `/?token=${token}`;
+            } else {
+                window.location.href = '/';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -14,6 +14,7 @@ RUN apk add --no-cache \
     nano \
     vim \
     htop \
+    docker-cli \
     && rm -rf /var/cache/apk/*
 
 # Create app directory
@@ -47,7 +48,7 @@ EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/api/system', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+    CMD node -e "require('https').get('https://127.0.0.1:3443/api/system', {rejectUnauthorized: false}, (res) => { process.exit(res.statusCode === 401 ? 0 : 1) })"
 
 # Start the application as root
 CMD ["node", "server.js"]

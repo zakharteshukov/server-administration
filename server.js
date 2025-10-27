@@ -150,14 +150,524 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+app.get('/terminal-fullscreen', requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'terminal-fullscreen.html'));
+});
+
+// Docker containers endpoint
+app.get('/api/docker', requireAuth, async (req, res) => {
+  try {
+    const { exec } = require('child_process');
+    
+    // Get Docker containers with detailed information
+    const dockerContainers = await new Promise((resolve, reject) => {
+      exec('docker ps -a --format "{{.ID}}|{{.Names}}|{{.Image}}|{{.Status}}|{{.Ports}}|{{.CreatedAt}}"', (error, stdout, stderr) => {
+        if (error) {
+          console.error('Docker command error:', error);
+          resolve([]);
+          return;
+        }
+        
+        const containers = stdout.trim().split('\n').filter(line => line.trim()).map(line => {
+          const [id, name, image, status, ports, createdAt] = line.split('|');
+          return {
+            id: id.substring(0, 12), // Short ID
+            name: name,
+            image: image,
+            status: status,
+            ports: ports || 'No ports',
+            createdAt: createdAt,
+            uptime: calculateUptime(status, createdAt)
+          };
+        });
+        
+        resolve(containers);
+      });
+    });
+    
+    // Get Docker images
+    const dockerImages = await new Promise((resolve, reject) => {
+      exec('docker images --format "{{.Repository}}|{{.Tag}}|{{.ID}}|{{.CreatedAt}}|{{.Size}}"', (error, stdout, stderr) => {
+        if (error) {
+          console.error('Docker images error:', error);
+          resolve([]);
+          return;
+        }
+        
+        const images = stdout.trim().split('\n').filter(line => line.trim()).map(line => {
+          const [repository, tag, id, createdAt, size] = line.split('|');
+          return {
+            repository: repository,
+            tag: tag,
+            id: id.substring(0, 12),
+            createdAt: createdAt,
+            size: size
+          };
+        });
+        
+        resolve(images);
+      });
+    });
+    
+    res.json({
+      containers: dockerContainers,
+      images: dockerImages,
+      totalContainers: dockerContainers.length,
+      runningContainers: dockerContainers.filter(c => c.status.includes('Up')).length,
+      stoppedContainers: dockerContainers.filter(c => c.status.includes('Exited')).length
+    });
+  } catch (error) {
+    console.error('Docker API error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Docker container control endpoints
+app.post('/api/docker/start', requireAuth, async (req, res) => {
+  try {
+    const { container, password } = req.body;
+    
+    // Verify password
+    if (password !== ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
+    
+    if (!container) {
+      return res.status(400).json({ error: 'Container name is required' });
+    }
+    
+    const { exec } = require('child_process');
+    
+    // Start the container
+    exec(`docker start ${container}`, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Docker start error:', error);
+        return res.status(500).json({ error: `Failed to start container: ${error.message}` });
+      }
+      
+      res.json({ 
+        status: 'success', 
+        message: `Container '${container}' started successfully`,
+        output: stdout 
+      });
+    });
+    
+  } catch (error) {
+    console.error('Docker start API error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/docker/stop', requireAuth, async (req, res) => {
+  try {
+    const { container, password } = req.body;
+    
+    // Verify password
+    if (password !== ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
+    
+    if (!container) {
+      return res.status(400).json({ error: 'Container name is required' });
+    }
+    
+    const { exec } = require('child_process');
+    
+    // Stop the container
+    exec(`docker stop ${container}`, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Docker stop error:', error);
+        return res.status(500).json({ error: `Failed to stop container: ${error.message}` });
+      }
+      
+      res.json({ 
+        status: 'success', 
+        message: `Container '${container}' stopped successfully`,
+        output: stdout 
+      });
+    });
+    
+  } catch (error) {
+    console.error('Docker stop API error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/docker/restart', requireAuth, async (req, res) => {
+  try {
+    const { container, password } = req.body;
+    
+    // Verify password
+    if (password !== ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
+    
+    if (!container) {
+      return res.status(400).json({ error: 'Container name is required' });
+    }
+    
+    const { exec } = require('child_process');
+    
+    // Restart the container
+    exec(`docker restart ${container}`, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Docker restart error:', error);
+        return res.status(500).json({ error: `Failed to restart container: ${error.message}` });
+      }
+      
+      res.json({ 
+        status: 'success', 
+        message: `Container '${container}' restarted successfully`,
+        output: stdout 
+      });
+    });
+    
+  } catch (error) {
+    console.error('Docker restart API error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// System services endpoint
+app.get('/api/services', requireAuth, async (req, res) => {
+  try {
+    const { exec } = require('child_process');
+    
+    // Get system services using chroot to access host systemctl
+    const services = await new Promise((resolve, reject) => {
+      exec('chroot /host systemctl list-units --type=service --state=active,inactive,failed', (error, stdout, stderr) => {
+        if (error) {
+          console.error('Systemctl command error:', error);
+          resolve([]);
+          return;
+        }
+        
+        const serviceList = stdout.trim().split('\n').filter(line => line.trim() && !line.includes('UNIT') && !line.includes('LOAD')).map(line => {
+          const parts = line.trim().split(/\s+/);
+          if (parts.length >= 4) {
+            const unit = parts[0];
+            const load = parts[1];
+            const active = parts[2];
+            const sub = parts[3];
+            const description = parts.slice(4).join(' ') || 'No description';
+            
+            return {
+              name: unit,
+              load: load,
+              active: active,
+              sub: sub,
+              description: description,
+              status: getServiceStatus(active, sub),
+              uptime: getServiceUptime(active)
+            };
+          }
+          return null;
+        }).filter(service => service !== null);
+        
+        resolve(serviceList);
+      });
+    });
+    
+    // Filter out systemd services and focus on user services
+    const filteredServices = services.filter(service => 
+      !service.name.includes('systemd') && 
+      !service.name.includes('dbus') &&
+      !service.name.includes('getty') &&
+      service.name.length > 0
+    );
+    
+    res.json({
+      services: filteredServices,
+      totalServices: filteredServices.length,
+      activeServices: filteredServices.filter(s => s.status === 'active').length,
+      inactiveServices: filteredServices.filter(s => s.status === 'inactive').length,
+      failedServices: filteredServices.filter(s => s.status === 'failed').length
+    });
+  } catch (error) {
+    console.error('Services API error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Helper function to determine service status
+function getServiceStatus(active, sub) {
+  if (active === 'active' && sub === 'running') {
+    return 'active';
+  } else if (active === 'inactive') {
+    return 'inactive';
+  } else if (active === 'failed') {
+    return 'failed';
+  } else {
+    return 'inactive';
+  }
+}
+
+// Helper function to get service uptime
+function getServiceUptime(active) {
+  if (active.includes('active')) {
+    // Extract uptime from active status (e.g., "active (running) since Mon 2025-10-26 12:00:00 UTC; 1h 30min ago")
+    const uptimeMatch = active.match(/since.*?; (.*?) ago/);
+    if (uptimeMatch) {
+      return uptimeMatch[1];
+    }
+    return 'Running';
+  } else {
+    return 'Inactive';
+  }
+}
+
+// System services control endpoints
+app.post('/api/services/start', requireAuth, async (req, res) => {
+  try {
+    const { service, password } = req.body;
+    
+    // Verify password
+    if (password !== ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Invalid password', status: 'error' });
+    }
+    
+    if (!service) {
+      return res.status(400).json({ error: 'Service name is required', status: 'error' });
+    }
+    
+    const { exec } = require('child_process');
+    
+    // Start the service
+    exec(`chroot /host systemctl start ${service}`, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Service start error:', error);
+        return res.status(500).json({ 
+          status: 'error',
+          error: `Failed to start service: ${error.message}` 
+        });
+      }
+      
+      res.json({ 
+        status: 'success', 
+        message: `Service '${service}' started successfully`,
+        output: stdout 
+      });
+    });
+    
+  } catch (error) {
+    console.error('Service start API error:', error);
+    res.status(500).json({ status: 'error', error: error.message });
+  }
+});
+
+app.post('/api/services/stop', requireAuth, async (req, res) => {
+  try {
+    const { service, password } = req.body;
+    
+    // Verify password
+    if (password !== ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Invalid password', status: 'error' });
+    }
+    
+    if (!service) {
+      return res.status(400).json({ error: 'Service name is required', status: 'error' });
+    }
+    
+    const { exec } = require('child_process');
+    
+    // Stop the service
+    exec(`chroot /host systemctl stop ${service}`, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Service stop error:', error);
+        return res.status(500).json({ 
+          status: 'error',
+          error: `Failed to stop service: ${error.message}` 
+        });
+      }
+      
+      res.json({ 
+        status: 'success', 
+        message: `Service '${service}' stopped successfully`,
+        output: stdout 
+      });
+    });
+    
+  } catch (error) {
+    console.error('Service stop API error:', error);
+    res.status(500).json({ status: 'error', error: error.message });
+  }
+});
+
+app.post('/api/services/restart', requireAuth, async (req, res) => {
+  try {
+    const { service, password } = req.body;
+    
+    // Verify password
+    if (password !== ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Invalid password', status: 'error' });
+    }
+    
+    if (!service) {
+      return res.status(400).json({ error: 'Service name is required', status: 'error' });
+    }
+    
+    const { exec } = require('child_process');
+    
+    // Restart the service
+    exec(`chroot /host systemctl restart ${service}`, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Service restart error:', error);
+        return res.status(500).json({ 
+          status: 'error',
+          error: `Failed to restart service: ${error.message}` 
+        });
+      }
+      
+      res.json({ 
+        status: 'success', 
+        message: `Service '${service}' restarted successfully`,
+        output: stdout 
+      });
+    });
+    
+  } catch (error) {
+    console.error('Service restart API error:', error);
+    res.status(500).json({ status: 'error', error: error.message });
+  }
+});
+
+// Helper function to calculate uptime
+function calculateUptime(status, createdAt) {
+  if (status.includes('Up')) {
+    // Extract uptime from status (e.g., "Up 2 hours", "Up 3 days")
+    const uptimeMatch = status.match(/Up (.*)/);
+    if (uptimeMatch) {
+      return uptimeMatch[1];
+    }
+    return 'Running';
+  } else if (status.includes('Exited')) {
+    return 'Inactive';
+  } else {
+    return 'Unknown';
+  }
+}
+
+// Custom function to read host memory
+async function getHostMemory() {
+  try {
+    const meminfo = fs.readFileSync('/host/proc/meminfo', 'utf8');
+    const parseMeminfo = (str) => {
+      const data = {};
+      str.split('\n').forEach(line => {
+        // Match lines like "MemTotal:       16369768 kB"
+        const match = line.match(/^(\w+):\s+(\d+)\s+kB$/);
+        if (match) {
+          data[match[1]] = parseInt(match[2]) * 1024;
+        }
+      });
+      return data;
+    };
+    
+    const mem = parseMeminfo(meminfo);
+    
+    // Calculate actual used memory (exclude cached and buffers from used)
+    const usedMem = mem.MemTotal - mem.MemFree - mem.Cached - mem.Buffers;
+    const availableMem = mem.MemAvailable || (mem.MemFree + mem.Cached);
+    
+    return {
+      total: mem.MemTotal,
+      free: mem.MemFree,
+      used: usedMem,
+      active: mem.Active,
+      buffers: mem.Buffers,
+      cached: mem.Cached,
+      available: availableMem,
+      swaptotal: mem.SwapTotal,
+      swapused: mem.SwapUsed || 0,
+      swapfree: mem.SwapFree || mem.SwapTotal
+    };
+  } catch (error) {
+    console.error('Error reading host memory:', error);
+    // Fallback to regular si.mem()
+    return await si.mem();
+  }
+}
+
+// Custom function to read host CPU load
+async function getHostLoad() {
+  try {
+    const loadavg = fs.readFileSync('/host/proc/loadavg', 'utf8');
+    const parts = loadavg.trim().split(/\s+/);
+    const cpuCount = parseInt(fs.readFileSync('/host/proc/cpuinfo', 'utf8').split('\n')
+      .filter(line => line.startsWith('processor')).length);
+    
+    return {
+      currentload: parseFloat(parts[0]) / cpuCount * 100,
+      currentload_user: parseFloat(parts[0]),
+      currentload_system: 0,
+      currentload_nice: 0,
+      currentload_idle: 0,
+      currentload_iowait: 0,
+      currentload_irq: 0,
+      currentload_softirq: 0,
+      cpus: Array(cpuCount).fill(null).map(() => ({
+        load: parseFloat(parts[0]) / cpuCount * 100,
+        load_user: parseFloat(parts[0]) / cpuCount,
+        load_system: 0,
+        load_nice: 0,
+        load_idle: 0,
+        load_iowait: 0,
+        load_irq: 0,
+        load_softirq: 0
+      }))
+    };
+  } catch (error) {
+    // Fallback to regular si.currentLoad()
+    return await si.currentLoad();
+  }
+}
+
+// Custom function to read host disk usage
+async function getHostDisk() {
+  try {
+    const dfOutput = await new Promise((resolve, reject) => {
+      require('child_process').exec('df -T /host 2>/dev/null || df -T /', (error, stdout, stderr) => {
+        if (error) reject(error);
+        else resolve(stdout);
+      });
+    });
+    
+    const diskInfo = dfOutput.trim().split('\n').slice(1).map(line => {
+      const parts = line.trim().split(/\s+/);
+      if (parts.length < 7) return null;
+      return {
+        fs: parts[0],
+        type: parts[1],
+        size: parseInt(parts[2]) * 1024,
+        used: parseInt(parts[3]) * 1024,
+        available: parseInt(parts[4]) * 1024,
+        use: parseFloat(parts[5].replace('%', '')),
+        mount: parts[6]
+      };
+    }).filter(fs => fs !== null && !fs.mount.includes('/var/lib/docker/overlay2') && !fs.type.includes('overlay'));
+    
+    // Get root filesystem info - prioritize /host mount
+    const rootFs = diskInfo.find(fs => fs.mount === '/host') || 
+                   diskInfo.find(fs => fs.mount === '/') ||
+                   diskInfo[0];
+    
+    // Return the most relevant disk info
+    return rootFs ? [rootFs] : diskInfo;
+  } catch (error) {
+    console.error('Error reading host disk:', error);
+    // Fallback to regular si.fsSize()
+    return await si.fsSize();
+  }
+}
+
 // System information endpoints
 app.get('/api/system', requireAuth, async (req, res) => {
   try {
     // Use host system paths for monitoring
     const [cpu, memory, disk, osInfo, network] = await Promise.all([
       si.cpu(),
-      si.mem(),
-      si.fsSize(),
+      getHostMemory(),
+      getHostDisk(),
       si.osInfo(),
       si.networkInterfaces()
     ]);
@@ -197,7 +707,7 @@ app.get('/api/processes', async (req, res) => {
 app.get('/api/load', async (req, res) => {
   try {
     const [currentLoad, cpuTemperature] = await Promise.all([
-      si.currentLoad(),
+      getHostLoad(),
       si.cpuTemperature()
     ]);
     
@@ -291,9 +801,12 @@ io.use((socket, next) => {
 io.on('connection', (socket) => {
   console.log('Authenticated client connected:', socket.id);
   
+  // Track socket's terminals
+  const socketTerminals = new Map();
+  
   // Create new terminal session
   socket.on('terminal:create', (data) => {
-    const { cols = 120, rows = 30 } = data;
+    const { cols = 120, rows = 30, tabId, sessionId } = data;
     
     const terminal = pty.spawn('bash', ['--rcfile', '/tmp/bashrc'], {
       name: 'xterm-color',
@@ -317,7 +830,9 @@ io.on('connection', (socket) => {
       gid: 0
     });
     
-    terminals.set(socket.id, terminal);
+    const terminalId = `${socket.id}-${tabId || sessionId || Date.now()}`;
+    terminals.set(terminalId, terminal);
+    socketTerminals.set(tabId || sessionId, terminalId);
     
     // Send initial commands to set up the terminal
     setTimeout(() => {
@@ -326,40 +841,52 @@ io.on('connection', (socket) => {
     }, 200);
     
     terminal.on('data', (data) => {
-      socket.emit('terminal:data', data);
+      socket.emit('terminal:data', { data, tabId, sessionId });
     });
     
     terminal.on('exit', (code) => {
-      socket.emit('terminal:exit', code);
-      terminals.delete(socket.id);
+      socket.emit('terminal:exit', { code, tabId, sessionId });
+      terminals.delete(terminalId);
+      if (tabId) socketTerminals.delete(tabId);
+      if (sessionId) socketTerminals.delete(sessionId);
     });
     
-    socket.emit('terminal:created');
+    socket.emit('terminal:created', { tabId, sessionId, backendId: terminalId });
   });
   
   // Handle terminal input
   socket.on('terminal:input', (data) => {
-    const terminal = terminals.get(socket.id);
-    if (terminal) {
-      terminal.write(data);
+    const { data: inputData, tabId, sessionId } = data;
+    const terminalId = socketTerminals.get(tabId || sessionId);
+    if (terminalId) {
+      const terminal = terminals.get(terminalId);
+      if (terminal) {
+        terminal.write(inputData);
+      }
     }
   });
   
   // Handle terminal resize
   socket.on('terminal:resize', (data) => {
-    const terminal = terminals.get(socket.id);
-    if (terminal) {
-      terminal.resize(data.cols, data.rows);
+    const { cols, rows, tabId, sessionId } = data;
+    const terminalId = socketTerminals.get(tabId || sessionId);
+    if (terminalId) {
+      const terminal = terminals.get(terminalId);
+      if (terminal) {
+        terminal.resize(cols, rows);
+      }
     }
   });
   
   // Clean up on disconnect
   socket.on('disconnect', () => {
-    const terminal = terminals.get(socket.id);
-    if (terminal) {
-      terminal.kill();
-      terminals.delete(socket.id);
-    }
+    socketTerminals.forEach((terminalId) => {
+      const terminal = terminals.get(terminalId);
+      if (terminal) {
+        terminal.kill();
+        terminals.delete(terminalId);
+      }
+    });
     console.log('Client disconnected:', socket.id);
   });
 });
@@ -368,8 +895,8 @@ io.on('connection', (socket) => {
 setInterval(async () => {
   try {
     const [currentLoad, memory, uptime] = await Promise.all([
-      si.currentLoad(),
-      si.mem(),
+      getHostLoad(),
+      getHostMemory(),
       si.time()
     ]);
     
