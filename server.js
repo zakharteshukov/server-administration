@@ -785,6 +785,156 @@ app.post('/api/reboot', requireAuth, (req, res) => {
   }
 });
 
+// File Manager endpoints
+app.get('/api/files', requireAuth, (req, res) => {
+  try {
+    const { path: dirPath = '/host/root' } = req.query;
+    const { exec } = require('child_process');
+    
+    exec(`ls -lah ${dirPath}`, (error, stdout, stderr) => {
+      if (error) {
+        return res.status(500).json({ error: `Failed to list directory: ${error.message}` });
+      }
+      
+      const lines = stdout.trim().split('\n').slice(1); // Skip header
+      const files = lines.map(line => {
+        const parts = line.trim().split(/\s+/);
+        if (parts.length < 9) return null;
+        
+        const permissions = parts[0];
+        const links = parts[1];
+        const owner = parts[2];
+        const group = parts[3];
+        const size = parts[4];
+        const date = parts[5];
+        const time = parts[6];
+        const name = parts.slice(8).join(' ');
+        const isDir = permissions.startsWith('d');
+        const isSymlink = permissions.includes('l');
+        
+        return {
+          name,
+          type: isDir ? 'directory' : (isSymlink ? 'symlink' : 'file'),
+          permissions,
+          size,
+          owner,
+          group,
+          modified: `${date} ${time}`,
+          path: `${dirPath}/${name}`.replace('//', '/')
+        };
+      }).filter(item => item !== null);
+      
+      res.json({ files, path: dirPath });
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/files/download', requireAuth, (req, res) => {
+  try {
+    const { filePath } = req.query;
+    const file = path.resolve('/host', filePath);
+    
+    if (!file.startsWith('/host')) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    if (!fs.existsSync(file)) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    
+    if (!fs.statSync(file).isFile()) {
+      return res.status(400).json({ error: 'Not a file' });
+    }
+    
+    res.download(file);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Security Dashboard endpoints
+app.get('/api/security/ssh', requireAuth, async (req, res) => {
+  try {
+    const { exec } = require('child_process');
+    
+    exec('who', (error, stdout, stderr) => {
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
+      
+      const sessions = stdout.trim().split('\n').map(line => {
+        const parts = line.trim().split(/\s+/);
+        return {
+          user: parts[0],
+          tty: parts[1],
+          time: parts[2],
+          ip: parts[3] || 'localhost',
+          hostname: parts[4] || ''
+        };
+      });
+      
+      res.json({ sessions, total: sessions.length });
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/security/openvpn', requireAuth, async (req, res) => {
+  try {
+    const { exec } = require('child_process');
+    
+    exec('ps aux | grep openvpn | grep -v grep', (error, stdout, stderr) => {
+      if (error && error.code !== 1) {
+        return res.status(500).json({ error: error.message });
+      }
+      
+      const processes = stdout.trim().split('\n').map(line => {
+        const parts = line.trim().split(/\s+/);
+        return {
+          user: parts[0],
+          pid: parts[1],
+          cpu: parts[2],
+          mem: parts[3],
+          command: parts.slice(10).join(' ')
+        };
+      });
+      
+      res.json({ processes, total: processes.length });
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/security/connections', requireAuth, async (req, res) => {
+  try {
+    const { exec } = require('child_process');
+    
+    exec('ss -tnp | grep -E "ESTAB|LISTEN"', (error, stdout, stderr) => {
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
+      
+      const connections = stdout.trim().split('\n').map(line => {
+        const parts = line.trim().split(/\s+/);
+        return {
+          state: parts[0],
+          local: parts[3],
+          peer: parts[4] || '',
+          process: parts.slice(5).join(' ')
+        };
+      });
+      
+      res.json({ connections, total: connections.length });
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Socket.IO authentication middleware
 io.use((socket, next) => {
   const token = socket.handshake.auth.token || socket.handshake.query.token;

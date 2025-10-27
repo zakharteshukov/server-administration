@@ -1254,6 +1254,253 @@
             word-wrap: break-word;
         }
 
+        /* File Manager Styles */
+        .file-manager-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .file-manager-btn {
+            padding: 6px 12px;
+            background: #222222;
+            border: 1px solid #333333;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: 'Courier New', 'Monaco', monospace;
+            transition: all 0.3s ease;
+            min-width: 40px;
+        }
+
+        .file-manager-btn:hover {
+            background: #333333;
+            border-color: #555555;
+        }
+
+        .file-path-input {
+            flex: 1;
+            padding: 6px 12px;
+            background: #222222;
+            border: 1px solid #333333;
+            color: #ffffff;
+            font-family: 'Courier New', 'Monaco', monospace;
+            font-size: 12px;
+        }
+
+        .file-path-input:focus {
+            outline: none;
+            border-color: #555555;
+        }
+
+        .file-manager-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #333333;
+            background: #111111;
+        }
+
+        .file-manager-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .file-manager-list::-webkit-scrollbar-track {
+            background: #111111;
+        }
+
+        .file-manager-list::-webkit-scrollbar-thumb {
+            background: #333333;
+            border-radius: 4px;
+        }
+
+        .file-manager-list::-webkit-scrollbar-thumb:hover {
+            background: #444444;
+        }
+
+        .file-item {
+            display: grid;
+            grid-template-columns: 30px 1fr 100px 80px 100px 150px;
+            padding: 8px 12px;
+            border-bottom: 1px solid #222222;
+            align-items: center;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .file-item:hover {
+            background: #222222;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-icon {
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .file-name {
+            color: #ffffff;
+            font-weight: bold;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-size {
+            color: #cccccc;
+            text-align: right;
+        }
+
+        .file-type {
+            color: #888888;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .file-owner {
+            color: #999999;
+            font-size: 11px;
+        }
+
+        .file-modified {
+            color: #999999;
+            font-size: 11px;
+        }
+
+        .file-header {
+            display: grid;
+            grid-template-columns: 30px 1fr 100px 80px 100px 150px;
+            padding: 8px 12px;
+            background: #333333;
+            font-weight: bold;
+            font-size: 12px;
+            border-bottom: 2px solid #444444;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        /* Security Dashboard Styles */
+        .security-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333333;
+        }
+
+        .security-tab {
+            padding: 8px 16px;
+            background: #222222;
+            border: 1px solid #333333;
+            border-bottom: none;
+            color: #cccccc;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: 'Courier New', 'Monaco', monospace;
+            transition: all 0.3s ease;
+        }
+
+        .security-tab:hover {
+            background: #2a2a2a;
+            border-color: #555555;
+        }
+
+        .security-tab.active {
+            background: #000000;
+            color: #ffffff;
+            border-color: #555555;
+        }
+
+        .security-content {
+            border: 1px solid #333333;
+            background: #111111;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .security-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .security-content::-webkit-scrollbar-track {
+            background: #111111;
+        }
+
+        .security-content::-webkit-scrollbar-thumb {
+            background: #333333;
+            border-radius: 4px;
+        }
+
+        .security-content::-webkit-scrollbar-thumb:hover {
+            background: #444444;
+        }
+
+        .security-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            padding: 10px 12px;
+            border-bottom: 1px solid #222222;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .security-item:last-child {
+            border-bottom: none;
+        }
+
+        .security-item:hover {
+            background: #222222;
+        }
+
+        .security-header {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            padding: 10px 12px;
+            background: #333333;
+            font-weight: bold;
+            font-size: 12px;
+            border-bottom: 2px solid #444444;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .security-value {
+            color: #ffffff;
+        }
+
+        .security-label {
+            color: #cccccc;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .file-header,
+            .file-item {
+                grid-template-columns: 30px 1fr 80px;
+                font-size: 11px;
+            }
+
+            .file-size,
+            .file-type,
+            .file-owner,
+            .file-modified {
+                display: none;
+            }
+
+            .security-item,
+            .security-header {
+                grid-template-columns: 1fr 1fr;
+                font-size: 11px;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -1401,6 +1648,32 @@
             </div>
             <div class="services-list" id="services-list">
                 <!-- System services will be populated here -->
+            </div>
+        </div>
+
+        <!-- File Manager -->
+        <div class="card">
+            <h2>FILE MANAGER</h2>
+            <div class="file-manager-controls">
+                <button class="file-manager-btn" onclick="fileManagerNavigateUp()" title="Go up">⬆</button>
+                <button class="file-manager-btn" onclick="fileManagerRefresh()" title="Refresh">⟳</button>
+                <input type="text" id="file-manager-path" placeholder="/host/root" class="file-path-input" onkeypress="handlePathInput(event)">
+            </div>
+            <div class="file-manager-list" id="file-manager-list">
+                <div style="padding: 2%; text-align: center; color: #666666;">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Security Dashboard -->
+        <div class="card">
+            <h2>SECURITY DASHBOARD</h2>
+            <div class="security-tabs">
+                <button class="security-tab active" onclick="switchSecurityTab('ssh')">SSH Sessions</button>
+                <button class="security-tab" onclick="switchSecurityTab('openvpn')">OpenVPN</button>
+                <button class="security-tab" onclick="switchSecurityTab('connections')">Active Connections</button>
+            </div>
+            <div id="security-content">
+                <!-- Security content will be populated here -->
             </div>
         </div>
 
@@ -2169,6 +2442,241 @@
             localStorage.removeItem('adminToken');
             window.location.href = '/login';
         }
+        
+        // File Manager functionality
+        let currentPath = '/host/root';
+        
+        async function loadFileManager() {
+            try {
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch(`/api/files?path=${encodeURIComponent(currentPath)}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.status === 401) {
+                    localStorage.removeItem('adminToken');
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const data = await response.json();
+                updateFileManager(data);
+                
+            } catch (error) {
+                console.error('Error loading file manager:', error);
+            }
+        }
+        
+        function updateFileManager(data) {
+            const container = document.getElementById('file-manager-list');
+            document.getElementById('file-manager-path').value = data.path;
+            
+            if (data.files.length === 0) {
+                container.innerHTML = '<div style="padding: 2%; text-align: center; color: #666666;">Directory is empty</div>';
+                return;
+            }
+            
+            const header = `
+                <div class="file-header">
+                    <div>Type</div>
+                    <div>Name</div>
+                    <div>Size</div>
+                    <div>Type</div>
+                    <div>Owner</div>
+                    <div>Modified</div>
+                </div>
+            `;
+            
+            const items = data.files.map(file => {
+                const icon = file.type === 'directory' ? '📁' : '📄';
+                return `
+                    <div class="file-item" onclick="navigateFile('${file.path}', '${file.type}')">
+                        <div class="file-icon">${icon}</div>
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${file.size}</div>
+                        <div class="file-type">${file.type}</div>
+                        <div class="file-owner">${file.owner}</div>
+                        <div class="file-modified">${file.modified}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = header + items;
+        }
+        
+        function navigateFile(filePath, type) {
+            if (type === 'directory') {
+                currentPath = filePath;
+                loadFileManager();
+            }
+        }
+        
+        function fileManagerNavigateUp() {
+            const path = currentPath.split('/').slice(0, -1).join('/') || '/host';
+            currentPath = path;
+            loadFileManager();
+        }
+        
+        function fileManagerRefresh() {
+            loadFileManager();
+        }
+        
+        function handlePathInput(event) {
+            if (event.key === 'Enter') {
+                const path = event.target.value;
+                if (path) {
+                    currentPath = path;
+                    loadFileManager();
+                }
+            }
+        }
+        
+        // Security Dashboard functionality
+        let currentSecurityTab = 'ssh';
+        
+        async function loadSecurityData(tab) {
+            try {
+                const token = localStorage.getItem('adminToken');
+                let response;
+                
+                if (tab === 'ssh') {
+                    response = await fetch('/api/security/ssh', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                } else if (tab === 'openvpn') {
+                    response = await fetch('/api/security/openvpn', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                } else if (tab === 'connections') {
+                    response = await fetch('/api/security/connections', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                }
+                
+                if (response.status === 401) {
+                    localStorage.removeItem('adminToken');
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const data = await response.json();
+                updateSecurityDisplay(tab, data);
+                
+            } catch (error) {
+                console.error('Error loading security data:', error);
+            }
+        }
+        
+        function updateSecurityDisplay(tab, data) {
+            const container = document.getElementById('security-content');
+            
+            if (tab === 'ssh') {
+                if (data.sessions.length === 0) {
+                    container.innerHTML = '<div style="padding: 2%; text-align: center; color: #666666;">No SSH sessions</div>';
+                    return;
+                }
+                
+                const header = `
+                    <div class="security-header">
+                        <div>User</div>
+                        <div>TTY</div>
+                        <div>Time</div>
+                        <div>IP</div>
+                    </div>
+                `;
+                
+                const items = data.sessions.map(session => `
+                    <div class="security-item">
+                        <div class="security-value">${session.user}</div>
+                        <div class="security-value">${session.tty}</div>
+                        <div class="security-value">${session.time}</div>
+                        <div class="security-value">${session.ip}</div>
+                    </div>
+                `).join('');
+                
+                container.innerHTML = header + items;
+                
+            } else if (tab === 'openvpn') {
+                if (data.processes.length === 0) {
+                    container.innerHTML = '<div style="padding: 2%; text-align: center; color: #666666;">No OpenVPN processes running</div>';
+                    return;
+                }
+                
+                const header = `
+                    <div class="security-header">
+                        <div>User</div>
+                        <div>PID</div>
+                        <div>CPU</div>
+                        <div>Memory</div>
+                    </div>
+                `;
+                
+                const items = data.processes.map(proc => `
+                    <div class="security-item">
+                        <div class="security-value">${proc.user}</div>
+                        <div class="security-value">${proc.pid}</div>
+                        <div class="security-value">${proc.cpu}%</div>
+                        <div class="security-value">${proc.mem}%</div>
+                    </div>
+                `).join('');
+                
+                container.innerHTML = header + items;
+                
+            } else if (tab === 'connections') {
+                if (data.connections.length === 0) {
+                    container.innerHTML = '<div style="padding: 2%; text-align: center; color: #666666;">No active connections</div>';
+                    return;
+                }
+                
+                const header = `
+                    <div class="security-header">
+                        <div>State</div>
+                        <div>Local</div>
+                        <div>Peer</div>
+                        <div>Process</div>
+                    </div>
+                `;
+                
+                const items = data.connections.map(conn => `
+                    <div class="security-item">
+                        <div class="security-value">${conn.state}</div>
+                        <div class="security-value">${conn.local}</div>
+                        <div class="security-value">${conn.peer || 'N/A'}</div>
+                        <div class="security-value">${conn.process || 'N/A'}</div>
+                    </div>
+                `).join('');
+                
+                container.innerHTML = header + items;
+            }
+        }
+        
+        function switchSecurityTab(tab) {
+            currentSecurityTab = tab;
+            
+            // Update tab buttons
+            document.querySelectorAll('.security-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            loadSecurityData(tab);
+        }
+        
+        // Load initial data for file manager and security
+        loadFileManager();
+        loadSecurityData('ssh');
+        
+        // Set up periodic updates
+        setInterval(loadFileManager, 30000); // Update file manager every 30 seconds
+        setInterval(() => loadSecurityData(currentSecurityTab), 15000); // Update security every 15 seconds
     </script>
 </body>
 </html>
