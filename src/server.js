@@ -7,6 +7,7 @@ const pty = require('node-pty');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 
@@ -23,23 +24,43 @@ const io = socketIo(httpServer, {
 
 const HTTP_PORT = process.env.HTTP_PORT || 3000;
 
+// Configuration from environment
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const SESSION_EXPIRY_DAYS = parseInt(process.env.SESSION_EXPIRY_DAYS || '30');
+const SESSION_EXPIRY_MS = SESSION_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+const UPDATE_INTERVAL_MS = parseInt(process.env.UPDATE_INTERVAL_MS || '2000');
+
+// Rate limiting configuration
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5, // limit each IP to 5 login attempts per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
-
-// No redirect needed - nginx handles HTTPS termination
+app.use('/api/', limiter);
 
 // Store terminal sessions
 const terminals = new Map();
 
 // Authentication configuration
-const ADMIN_PASSWORD = 'admin123'; // Change this password
 const SESSION_SECRET = crypto.randomBytes(32).toString('hex');
 
 // Load sessions from file on startup
 const sessions = new Map();
 const SESSIONS_FILE = path.join(__dirname, '..', 'sessions.json');
+let sessionSaveTimeout = null;
 
 try {
   if (fs.existsSync(SESSIONS_FILE)) {
@@ -47,8 +68,8 @@ try {
     const sessionsData = JSON.parse(data);
     const now = Date.now();
     for (const [token, session] of Object.entries(sessionsData)) {
-      // Only load sessions less than 30 days old
-      if (now - session.lastAccess < 30 * 24 * 60 * 60 * 1000) {
+      // Only load sessions less than expiry time old
+      if (now - session.lastAccess < SESSION_EXPIRY_MS) {
         sessions.set(token, session);
       }
     }
@@ -56,6 +77,22 @@ try {
   }
 } catch (err) {
   console.error('Error loading sessions:', err);
+}
+
+// Security helper functions
+function sanitizeInput(input) {
+  if (typeof input !== 'string') return '';
+  // Remove dangerous characters to prevent command injection
+  return input.replace(/[;&|`$<>'"\0\n\r]/g, '');
+}
+
+function escapeShellArg(arg) {
+  // Escape shell arguments to prevent injection
+  return `"${String(arg).replace(/"/g, '\\"')}"`;
+}
+
+function verifyPassword(password) {
+  return password === ADMIN_PASSWORD;
 }
 
 // Session management
@@ -73,11 +110,11 @@ function createSession() {
     createdAt: Date.now(),
     lastAccess: Date.now()
   });
-  saveSessions(); // Save to disk
+  debouncedSaveSessions(); // Save to disk (debounced)
   return token;
 }
 
-// Save sessions to file
+// Save sessions to file (debounced)
 function saveSessions() {
   try {
     const sessionsObj = {};
@@ -93,18 +130,29 @@ function saveSessions() {
 function updateSession(token) {
   if (sessions.has(token)) {
     sessions.get(token).lastAccess = Date.now();
-    saveSessions(); // Save to disk
+    debouncedSaveSessions();
   }
 }
 
-// Clean up expired sessions (older than 30 days)
+// Debounced save to reduce file I/O
+function debouncedSaveSessions() {
+  if (sessionSaveTimeout) {
+    clearTimeout(sessionSaveTimeout);
+  }
+  sessionSaveTimeout = setTimeout(() => {
+    saveSessions();
+  }, 2000); // Save after 2 seconds of inactivity
+}
+
+// Clean up expired sessions
 setInterval(() => {
   const now = Date.now();
   for (const [token, session] of sessions.entries()) {
-    if (now - session.lastAccess > 30 * 24 * 60 * 60 * 1000) {
+    if (now - session.lastAccess > SESSION_EXPIRY_MS) {
       sessions.delete(token);
     }
   }
+  debouncedSaveSessions(); // Save after cleanup
 }, 60 * 60 * 1000); // Run every hour
 
 // Authentication middleware
@@ -124,11 +172,11 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
 });
 
-app.post('/api/login', (req, res) => {
+app.post('/api/login', authLimiter, (req, res) => {
   try {
     const { password } = req.body;
     
-    if (!password || password !== ADMIN_PASSWORD) {
+    if (!password || !verifyPassword(password)) {
       return res.status(401).json({ 
         error: 'Invalid password', 
         status: 'error' 
@@ -247,7 +295,7 @@ app.post('/api/docker/start', requireAuth, async (req, res) => {
     const { container, password } = req.body;
     
     // Verify password
-    if (password !== ADMIN_PASSWORD) {
+    if (!password || !verifyPassword(password)) {
       return res.status(401).json({ error: 'Invalid password' });
     }
     
@@ -255,10 +303,13 @@ app.post('/api/docker/start', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Container name is required' });
     }
     
+    // Sanitize container name
+    const sanitizedContainer = escapeShellArg(sanitizeInput(container));
+    
     const { exec } = require('child_process');
     
     // Start the container
-    exec(`docker start ${container}`, (error, stdout, stderr) => {
+    exec(`docker start ${sanitizedContainer}`, (error, stdout, stderr) => {
       if (error) {
         console.error('Docker start error:', error);
         return res.status(500).json({ error: `Failed to start container: ${error.message}` });
@@ -282,7 +333,7 @@ app.post('/api/docker/stop', requireAuth, async (req, res) => {
     const { container, password } = req.body;
     
     // Verify password
-    if (password !== ADMIN_PASSWORD) {
+    if (!password || !verifyPassword(password)) {
       return res.status(401).json({ error: 'Invalid password' });
     }
     
@@ -290,10 +341,13 @@ app.post('/api/docker/stop', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Container name is required' });
     }
     
+    // Sanitize container name
+    const sanitizedContainer = escapeShellArg(sanitizeInput(container));
+    
     const { exec } = require('child_process');
     
     // Stop the container
-    exec(`docker stop ${container}`, (error, stdout, stderr) => {
+    exec(`docker stop ${sanitizedContainer}`, (error, stdout, stderr) => {
       if (error) {
         console.error('Docker stop error:', error);
         return res.status(500).json({ error: `Failed to stop container: ${error.message}` });
@@ -317,7 +371,7 @@ app.post('/api/docker/restart', requireAuth, async (req, res) => {
     const { container, password } = req.body;
     
     // Verify password
-    if (password !== ADMIN_PASSWORD) {
+    if (!password || !verifyPassword(password)) {
       return res.status(401).json({ error: 'Invalid password' });
     }
     
@@ -325,10 +379,13 @@ app.post('/api/docker/restart', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Container name is required' });
     }
     
+    // Sanitize container name
+    const sanitizedContainer = escapeShellArg(sanitizeInput(container));
+    
     const { exec } = require('child_process');
     
     // Restart the container
-    exec(`docker restart ${container}`, (error, stdout, stderr) => {
+    exec(`docker restart ${sanitizedContainer}`, (error, stdout, stderr) => {
       if (error) {
         console.error('Docker restart error:', error);
         return res.status(500).json({ error: `Failed to restart container: ${error.message}` });
@@ -441,7 +498,7 @@ app.post('/api/services/start', requireAuth, async (req, res) => {
     const { service, password } = req.body;
     
     // Verify password
-    if (password !== ADMIN_PASSWORD) {
+    if (!password || !verifyPassword(password)) {
       return res.status(401).json({ error: 'Invalid password', status: 'error' });
     }
     
@@ -449,10 +506,13 @@ app.post('/api/services/start', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Service name is required', status: 'error' });
     }
     
+    // Sanitize service name
+    const sanitizedService = escapeShellArg(sanitizeInput(service));
+    
     const { exec } = require('child_process');
     
     // Start the service
-    exec(`chroot /host systemctl start ${service}`, (error, stdout, stderr) => {
+    exec(`chroot /host systemctl start ${sanitizedService}`, (error, stdout, stderr) => {
       if (error) {
         console.error('Service start error:', error);
         return res.status(500).json({ 
@@ -479,7 +539,7 @@ app.post('/api/services/stop', requireAuth, async (req, res) => {
     const { service, password } = req.body;
     
     // Verify password
-    if (password !== ADMIN_PASSWORD) {
+    if (!password || !verifyPassword(password)) {
       return res.status(401).json({ error: 'Invalid password', status: 'error' });
     }
     
@@ -487,10 +547,13 @@ app.post('/api/services/stop', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Service name is required', status: 'error' });
     }
     
+    // Sanitize service name
+    const sanitizedService = escapeShellArg(sanitizeInput(service));
+    
     const { exec } = require('child_process');
     
     // Stop the service
-    exec(`chroot /host systemctl stop ${service}`, (error, stdout, stderr) => {
+    exec(`chroot /host systemctl stop ${sanitizedService}`, (error, stdout, stderr) => {
       if (error) {
         console.error('Service stop error:', error);
         return res.status(500).json({ 
@@ -517,7 +580,7 @@ app.post('/api/services/restart', requireAuth, async (req, res) => {
     const { service, password } = req.body;
     
     // Verify password
-    if (password !== ADMIN_PASSWORD) {
+    if (!password || !verifyPassword(password)) {
       return res.status(401).json({ error: 'Invalid password', status: 'error' });
     }
     
@@ -525,10 +588,13 @@ app.post('/api/services/restart', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Service name is required', status: 'error' });
     }
     
+    // Sanitize service name
+    const sanitizedService = escapeShellArg(sanitizeInput(service));
+    
     const { exec } = require('child_process');
     
     // Restart the service
-    exec(`chroot /host systemctl restart ${service}`, (error, stdout, stderr) => {
+    exec(`chroot /host systemctl restart ${sanitizedService}`, (error, stdout, stderr) => {
       if (error) {
         console.error('Service restart error:', error);
         return res.status(500).json({ 
@@ -744,10 +810,7 @@ app.post('/api/shutdown', requireAuth, (req, res) => {
   try {
     const { password } = req.body;
     
-    // Simple password verification (you can change this password)
-    const correctPassword = 'admin123';
-    
-    if (!password || password !== correctPassword) {
+    if (!password || !verifyPassword(password)) {
       return res.status(401).json({ 
         error: 'Invalid password', 
         status: 'error' 
@@ -776,10 +839,7 @@ app.post('/api/reboot', requireAuth, (req, res) => {
   try {
     const { password } = req.body;
     
-    // Simple password verification (you can change this password)
-    const correctPassword = 'admin123';
-    
-    if (!password || password !== correctPassword) {
+    if (!password || !verifyPassword(password)) {
       return res.status(401).json({ 
         error: 'Invalid password', 
         status: 'error' 
@@ -807,10 +867,20 @@ app.post('/api/reboot', requireAuth, (req, res) => {
 // File Manager endpoints
 app.get('/api/files', requireAuth, (req, res) => {
   try {
-    const { path: dirPath = '/host/root' } = req.query;
+    let { path: dirPath = '/host/root' } = req.query;
+    
+    // Sanitize and validate path
+    dirPath = dirPath.replace(/[;&|`$<>'"\0]/g, '');
+    
+    // Ensure path starts with /host
+    if (!dirPath.startsWith('/host')) {
+      dirPath = '/host/root';
+    }
+    
+    const sanitizedPath = escapeShellArg(dirPath);
     const { exec } = require('child_process');
     
-    exec(`ls -lah ${dirPath}`, (error, stdout, stderr) => {
+    exec(`ls -lah ${sanitizedPath}`, (error, stdout, stderr) => {
       if (error) {
         return res.status(500).json({ error: `Failed to list directory: ${error.message}` });
       }
@@ -852,9 +922,18 @@ app.get('/api/files', requireAuth, (req, res) => {
 
 app.get('/api/files/download', requireAuth, (req, res) => {
   try {
-    const { filePath } = req.query;
+    let { filePath } = req.query;
+    
+    if (!filePath) {
+      return res.status(400).json({ error: 'File path is required' });
+    }
+    
+    // Sanitize file path
+    filePath = filePath.replace(/[;&|`$<>'"\0]/g, '');
+    
     const file = path.resolve('/host', filePath);
     
+    // Ensure path is within /host
     if (!file.startsWith('/host')) {
       return res.status(403).json({ error: 'Access denied' });
     }
@@ -1170,7 +1249,7 @@ app.post('/api/security/ssh/terminate', requireAuth, (req, res) => {
   try {
     const { user, tty, password } = req.body;
     
-    if (!password || password !== ADMIN_PASSWORD) {
+    if (!password || !verifyPassword(password)) {
       return res.status(401).json({ error: 'Invalid password', status: 'error' });
     }
     
@@ -1178,10 +1257,14 @@ app.post('/api/security/ssh/terminate', requireAuth, (req, res) => {
       return res.status(400).json({ error: 'User and TTY are required', status: 'error' });
     }
     
+    // Sanitize inputs
+    const sanitizedUser = sanitizeInput(user);
+    const sanitizedTTY = escapeShellArg(sanitizeInput(tty));
+    
     const { exec } = require('child_process');
     
     // Kill the SSH session by TTY
-    exec(`chroot /host pkill -9 -t ${tty}`, (error, stdout, stderr) => {
+    exec(`chroot /host pkill -9 -t ${sanitizedTTY}`, (error, stdout, stderr) => {
       if (error) {
         console.error('Error terminating SSH session:', error);
         return res.status(500).json({ error: error.message, status: 'error' });
@@ -1320,9 +1403,10 @@ setInterval(async () => {
   } catch (error) {
     console.error('Error updating system data:', error);
   }
-}, 2000); // Update every 2 seconds
+}, UPDATE_INTERVAL_MS);
 
 // Start HTTP server (nginx handles SSL termination)
 httpServer.listen(HTTP_PORT, '0.0.0.0', () => {
   console.log(`HTTP server running on http://0.0.0.0:${HTTP_PORT}`);
 });
+

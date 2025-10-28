@@ -1,7 +1,7 @@
 services:
   system-monitor:
     build: .
-    container_name: system-monitor
+    container_name: SERVER-DASHBOARD
     network_mode: host
     volumes:
       - /:/host:rw
@@ -19,6 +19,9 @@ services:
       - NODE_ENV=production
       - HTTP_PORT=3000
       - HTTPS_PORT=3443
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - SESSION_EXPIRY_DAYS=${SESSION_EXPIRY_DAYS:-30}
+      - UPDATE_INTERVAL_MS=${UPDATE_INTERVAL_MS:-2000}
     restart: unless-stopped
     privileged: true
     user: root

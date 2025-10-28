@@ -101,3 +101,4 @@ When making changes, note these important path relationships:
 - Session data is stored in `sessions.json` at the project root (gitignored)
 - All configuration files that are copied into the Docker image are in organized directories for easier maintenance
 
+

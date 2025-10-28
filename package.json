@@ -12,7 +12,8 @@
     "socket.io": "^4.7.2",
     "systeminformation": "^5.21.15",
     "node-pty": "^1.0.0",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "express-rate-limit": "^7.1.5"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
