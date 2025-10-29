@@ -16,6 +16,8 @@ export class TerminalManager {
         this.settings = this.loadSettings();
         this.searchOptions = { regex: false, caseSensitive: false };
         this._eventsInitialized = false;
+        this.sessionKey = 'terminalSessionState';
+        this.outputBuffers = new Map();
     }
 
     /**
@@ -34,8 +36,7 @@ export class TerminalManager {
         tabElement.id = `tab-${tabId}`;
         tabElement.setAttribute('draggable', 'true');
         tabElement.innerHTML = `
-            <span class="tab-title">Terminal ${tabNumber}</span>
-            <span class="pin-icon" title="Pin/unpin" onclick="window.terminalManager.togglePin('${tabId}', event)">📌</span>
+            <span class="tab-title" ondblclick="window.terminalManager.renameTab('${tabId}', event)">Terminal ${tabNumber}</span>
             <span class="terminal-tab-close" onclick="window.terminalManager.closeTab('${tabId}', event)">×</span>
         `;
         tabElement.onclick = (e) => {
@@ -115,6 +116,11 @@ export class TerminalManager {
                 backendTerminalId = data.backendId || this.socket.id;
                 backendSessionConnected = true;
                 terminal.focus();
+                // Replay buffered output if any
+                const buf = this.outputBuffers.get(tabId);
+                if (buf && buf.length) {
+                    terminal.write(buf);
+                }
             }
         });
 
@@ -150,8 +156,12 @@ export class TerminalManager {
             backendTerminalId: backendTerminalId,
             connected: backendSessionConnected,
             pinned: false,
-            color: null
+            color: null,
+            name: `Terminal ${tabNumber}`
         });
+
+        // Persist session state
+        this.saveSessionState();
 
         if (!this.activeTabId) {
             this.activeTabId = tabId;
@@ -235,6 +245,10 @@ export class TerminalManager {
             if (tabId && this.terminals.has(tabId)) {
                 const tab = this.terminals.get(tabId);
                 tab.terminal.write(message.data);
+                // Append to output buffer (cap length)
+                const prev = this.outputBuffers.get(tabId) || '';
+                const next = (prev + message.data).slice(-20000);
+                this.outputBuffers.set(tabId, next);
             }
         });
 
@@ -272,6 +286,11 @@ export class TerminalManager {
                 e.preventDefault();
                 this.createTerminalTab();
             }
+            // Ctrl+F for search focus
+            if (e.ctrlKey && e.key.toLowerCase() === 'f') {
+                const el = document.getElementById('terminal-search-input');
+                if (el) { e.preventDefault(); el.focus(); el.select(); }
+            }
         });
 
         // Handle terminal resize for all terminals
@@ -282,6 +301,21 @@ export class TerminalManager {
                 this.socket.emit('terminal:resize', { cols, rows });
             });
         });
+        // Idle lock
+        let idleTimer = null;
+        const resetIdle = () => {
+            const lock = document.getElementById('terminal-lock');
+            if (lock) lock.style.display = 'none';
+            if (idleTimer) clearTimeout(idleTimer);
+            idleTimer = setTimeout(() => {
+                const lockEl = document.getElementById('terminal-lock');
+                if (lockEl) lockEl.style.display = 'flex';
+            }, (this.settings.idleMs || 10 * 60 * 1000));
+        };
+        ['mousemove','keydown','click','wheel','touchstart'].forEach(evt => {
+            document.addEventListener(evt, resetIdle, { passive: true });
+        });
+        resetIdle();
         this._eventsInitialized = true;
     }
 
@@ -290,7 +324,11 @@ export class TerminalManager {
      */
     initialize() {
         if (this.terminals.size === 0) {
-            this.createTerminalTab();
+            // Try to restore session
+            const restored = this.restoreSessionState();
+            if (!restored) {
+                this.createTerminalTab();
+            }
         }
         this.initializeSocketHandlers();
         this.initializeEventHandlers();
@@ -309,6 +347,86 @@ export class TerminalManager {
         if (this.socket === newSocket) return;
         this.socket = newSocket;
         this.initializeSocketHandlers();
+    }
+
+    // -------- Session persistence --------
+    getSessionState() {
+        const tabs = Array.from(this.terminals.values()).map(t => ({
+            tabId: t.tabId,
+            pinned: t.pinned,
+            color: t.color,
+            name: t.name
+        }));
+        return { tabs, activeTabId: this.activeTabId };
+    }
+    saveSessionState() {
+        try { localStorage.setItem(this.sessionKey, JSON.stringify(this.getSessionState())); } catch {}
+    }
+    restoreSessionState() {
+        let state;
+        try { state = JSON.parse(localStorage.getItem(this.sessionKey) || 'null'); } catch { state = null; }
+        if (!state || !state.tabs || state.tabs.length === 0) return false;
+        const container = document.getElementById('terminal-tabs');
+        // Clear any remnants
+        container.innerHTML = '';
+        this.terminals.clear();
+        this.activeTabId = null;
+        // Recreate tabs
+        state.tabs.forEach((meta, idx) => {
+            const id = this.createTerminalTab();
+            const info = this.terminals.get(id);
+            if (!info) return;
+            // apply meta
+            info.pinned = !!meta.pinned;
+            info.color = meta.color || null;
+            info.name = meta.name || info.name;
+            if (info.pinned) info.tabElement.classList.add('pinned');
+            info.tabElement.classList.remove('color-red','color-green','color-blue','color-yellow');
+            if (info.color) info.tabElement.classList.add(`color-${info.color}`);
+            // set title
+            const title = info.tabElement.querySelector('.tab-title');
+            if (title) title.textContent = info.name;
+        });
+        // activate
+        if (state.activeTabId && this.terminals.has(state.activeTabId)) {
+            this.switchTab(state.activeTabId);
+        }
+        return true;
+    }
+
+    renameTab(tabId, event) {
+        event && event.stopPropagation && event.stopPropagation();
+        const info = this.terminals.get(tabId);
+        if (!info) return;
+        const newName = prompt('Tab name:', info.name || 'Terminal');
+        if (newName) {
+            info.name = newName;
+            const title = info.tabElement.querySelector('.tab-title');
+            if (title) title.textContent = newName;
+            this.saveSessionState();
+        }
+    }
+
+    // When switching tabs, persist active
+    switchTab(tabId) {
+        const oldTab = this.terminals.get(this.activeTabId);
+        const newTab = this.terminals.get(tabId);
+        if (oldTab) {
+            oldTab.tabElement.classList.remove('active');
+            document.getElementById(this.activeTabId).style.display = 'none';
+        }
+        if (newTab) {
+            newTab.tabElement.classList.add('active');
+            document.getElementById(tabId).style.display = 'block';
+            this.activeTabId = tabId;
+            newTab.terminal.focus();
+            setTimeout(() => {
+                newTab.fitAddon.fit();
+                const { cols, rows } = newTab.terminal;
+                this.socket.emit('terminal:resize', { cols, rows });
+            }, 100);
+            this.saveSessionState();
+        }
     }
 
     /**
