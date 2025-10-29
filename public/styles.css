@@ -1,0 +1,1281 @@
+/* Extracted styles from index.html */
+/* ==========================================
+   RESET & BASE STYLES
+   ========================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+
+html {
+    font-size: 16px;
+}
+
+body {
+    font-family: 'Courier New', 'Monaco', monospace;
+    background: #000000;
+    min-height: 100vh;
+    color: #ffffff;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    line-height: 1.5;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ==========================================
+   LAYOUT STRUCTURE
+   ========================================== */
+.container {
+    max-width: 100%;
+    margin: 0;
+    padding: 1% 3%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #ffffff;
+    border-bottom: 2px solid #333333;
+    padding-bottom: 20px;
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    color: #ffffff;
+    font-weight: normal;
+}
+
+.header p {
+    font-size: 1.1rem;
+    color: #cccccc;
+}
+
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ==========================================
+   CARD COMPONENTS
+   ========================================== */
+
+.card {
+    background: #111111;
+    border: 1px solid #333333;
+    padding: 20px;
+    transition: border-color 0.3s ease;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* Responsive Cards */
+@media (max-width: 1200px) {
+    .card {
+        padding: 18px;
+    }
+}
+
+@media (max-width: 768px) {
+    .card {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .card {
+        padding: 12px;
+    }
+}
+
+.card:hover {
+    border-color: #666666;
+}
+
+.card h2 {
+    color: #ffffff;
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    border-bottom: 1px solid #333333;
+    padding-bottom: 10px;
+    font-weight: normal;
+}
+
+/* Responsive Card Headings */
+@media (max-width: 768px) {
+    .card h2 {
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .card h2 {
+        font-size: 1rem;
+        margin-bottom: 12px;
+        padding-bottom: 6px;
+    }
+}
+
+.metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 8px;
+    background: #222222;
+    border: 1px solid #333333;
+}
+
+/* Responsive Metrics */
+@media (max-width: 768px) {
+    .metric {
+        padding: 6px;
+        margin-bottom: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .metric {
+        padding: 5px;
+        margin-bottom: 6px;
+        font-size: 0.9rem;
+    }
+}
+
+.metric-label {
+    font-weight: normal;
+    color: #cccccc;
+}
+
+.metric-value {
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #333333;
+    overflow: hidden;
+    margin-top: 5px;
+    border: 1px solid #444444;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #ffffff;
+    transition: width 0.3s ease;
+}
+
+/* Small cards container - display in a row */
+.small-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+        
+@media (max-width: 768px) {
+    .small-cards-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+}
+        
+@media (max-width: 480px) {
+    .small-cards-container {
+        gap: 12px;
+    }
+}
+
+.terminal-container {
+    background: #000000;
+    border: 1px solid #333333;
+    padding: 1%;
+    height: 50vh;
+    min-height: 300px;
+    max-height: 600px;
+    overflow: hidden;
+}
+
+/* Responsive Terminal */
+@media (max-width: 1200px) {
+    .terminal-container {
+        height: 45vh;
+        min-height: 250px;
+    }
+}
+
+@media (max-width: 768px) {
+    .terminal-container {
+        height: 40vh;
+        min-height: 200px;
+        padding: 0.8%;
+    }
+}
+
+@media (max-width: 480px) {
+    .terminal-container {
+        height: 35vh;
+        min-height: 150px;
+        padding: 0.5%;
+    }
+}
+
+#terminal {
+    height: 100%;
+}
+        
+/* Terminal Tabs */
+.terminal-tabs {
+    display: flex;
+    border-bottom: 1px solid #333333;
+    background: #111111;
+    overflow-x: auto;
+    justify-content: space-between;
+}
+        
+.terminal-tabs-container {
+    display: flex;
+    overflow-x: auto;
+    flex: 1;
+}
+        
+.terminal-add-tab-btn {
+    padding: 8px 16px;
+    background: #222222;
+    border: 1px solid #333333;
+    border-bottom: none;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    min-width: 50px;
+    text-align: center;
+    transition: all 0.3s ease;
+    font-family: 'Courier New', 'Monaco', monospace;
+}
+        
+.terminal-add-tab-btn:hover {
+    background: #2a2a2a;
+    border-color: #555555;
+}
+        
+.terminal-fullscreen-btn {
+    padding: 8px 16px;
+    background: #222222;
+    border: 1px solid #333333;
+    border-bottom: none;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    min-width: 50px;
+    text-align: center;
+    transition: all 0.3s ease;
+    font-family: 'Courier New', 'Monaco', monospace;
+}
+        
+.terminal-fullscreen-btn:hover {
+    background: #2a2a2a;
+    border-color: #555555;
+}
+        
+/* Fullscreen terminal styles */
+.terminal-fullscreen-mode {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #000000;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+}
+        
+.terminal-fullscreen-mode .terminal-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #000000;
+}
+        
+.terminal-fullscreen-mode .terminal-content {
+    flex: 1;
+    height: 100%;
+}
+        
+.terminal-fullscreen-mode .terminal-tabs {
+    border-bottom: 2px solid #333333;
+}
+        
+.terminal-tab {
+    padding: 0;
+    background: #222222;
+    border: 1px solid #333333;
+    border-bottom: none;
+    color: #cccccc;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
+    position: relative;
+    margin-right: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 41px;
+    box-sizing: border-box;
+}
+        
+.terminal-tab:hover {
+    background: #2a2a2a;
+}
+        
+.terminal-tab.active {
+    background: #000000;
+    color: #ffffff;
+    border-color: #555555;
+}
+        
+.terminal-tab .tab-title {
+    padding: 8px 12px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+        
+.terminal-tab-close {
+    margin-right: 8px;
+    color: #888888;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 8px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    line-height: 1;
+    font-size: 20px;
+    width: 24px;
+    flex-shrink: 0;
+}
+        
+.terminal-tab-close:hover {
+    color: #ffffff;
+}
+        
+.terminal-content {
+    position: relative;
+    height: calc(100% - 41px);
+    padding-top: 3px;
+    overflow: hidden;
+}
+        
+.terminal-content > div {
+    height: 100%;
+}
+        
+.terminal-content .terminal {
+    width: 100%;
+    height: 100%;
+}
+
+/* Responsive Terminal Font */
+@media (max-width: 768px) {
+    #terminal {
+        font-size: 11px;
+    }
+            
+    .terminal-tab {
+        height: 36px;
+        font-size: 11px;
+    }
+            
+    .terminal-tab .tab-title {
+        padding: 6px 10px;
+    }
+            
+    .terminal-add-tab-btn {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    #terminal {
+        font-size: 10px;
+    }
+            
+    .terminal-tab {
+        height: 32px;
+        font-size: 10px;
+    }
+            
+    .terminal-tab .tab-title {
+        padding: 5px 8px;
+    }
+            
+    .terminal-tab-close {
+        font-size: 18px;
+        width: 20px;
+    }
+            
+    .terminal-add-tab-btn {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 6px;
+}
+
+.status-online {
+    background: #00ff00;
+}
+
+.status-offline {
+    background: #666666;
+}
+
+.server-control {
+    display: flex;
+    gap: 2%;
+    justify-content: space-between;
+    margin-top: 2%;
+}
+
+.control-button {
+    background: #222222;
+    border: 1px solid #333333;
+    color: #ffffff;
+    padding: 4px 16px;
+    cursor: pointer;
+    font-family: 'Courier New', 'Monaco', monospace;
+    font-size: 13px;
+    transition: all 0.3s ease;
+    width: 32%;
+    flex: 1;
+    min-width: 30%;
+    height: auto;
+    line-height: 1.2;
+}
+
+/* Responsive Button Sizing */
+@media (max-width: 768px) {
+    .control-button {
+        font-size: 12px;
+        padding: 6px 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .server-control {
+        flex-direction: row;
+        gap: 2%;
+    }
+            
+    .control-button {
+        font-size: 11px;
+        padding: 6px 12px;
+        min-width: 0;
+    }
+}
+
+.control-button:hover {
+    background: #333333;
+    border-color: #666666;
+}
+
+.shutdown-button {
+    background: #440000;
+    border-color: #660000;
+}
+
+.shutdown-button:hover {
+    background: #660000;
+    border-color: #880000;
+}
+
+.reboot-button {
+    background: #004400;
+    border-color: #006600;
+}
+
+.reboot-button:hover {
+    background: #006600;
+    border-color: #008800;
+}
+
+.logout-button {
+    background: #333366;
+    border-color: #444477;
+}
+
+.logout-button:hover {
+    background: #444477;
+    border-color: #555588;
+}
+
+/* Docker Containers Section */
+.docker-summary {
+    display: flex;
+    flex-direction: row;
+    gap: 2%;
+    margin-bottom: 1%;
+}
+        
+.docker-summary .metric {
+    flex: 1;
+    box-sizing: border-box;
+}
+
+.docker-containers {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #333333;
+    background: #111111;
+}
+
+.docker-containers::-webkit-scrollbar {
+    width: 8px;
+}
+
+.docker-containers::-webkit-scrollbar-track {
+    background: #111111;
+}
+
+.docker-containers::-webkit-scrollbar-thumb {
+    background: #333333;
+    border-radius: 4px;
+}
+
+.docker-containers::-webkit-scrollbar-thumb:hover {
+    background: #444444;
+}
+
+.docker-container {
+    display: grid;
+    grid-template-columns: minmax(180px, 200px) minmax(300px, 2.5fr) minmax(165px, 180px) minmax(170px, 190px);
+    padding: 8px 12px;
+    border-bottom: 1px solid #222222;
+    align-items: center;
+    font-size: 12px;
+    min-width: 1115px;
+}
+
+.docker-container > div {
+    padding: 6px 8px;
+    border-right: 1px solid #333333;
+}
+
+.docker-container > div:last-child {
+    border-right: none;
+}
+
+.docker-container:last-child {
+    border-bottom: none;
+}
+
+.docker-container:hover {
+    background: #222222;
+}
+
+.docker-header {
+    display: grid;
+    grid-template-columns: minmax(180px, 200px) minmax(300px, 2.5fr) minmax(165px, 180px) minmax(170px, 190px);
+    padding: 8px 12px;
+    background: #333333;
+    font-weight: bold;
+    font-size: 12px;
+    border-bottom: 2px solid #444444;
+    min-width: 965px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.docker-header > div {
+    padding: 6px 8px;
+    border-right: 1px solid #555555;
+}
+
+.docker-header > div:last-child {
+    border-right: none;
+}
+
+.docker-name {
+    color: #ffffff;
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.docker-image {
+    color: #cccccc;
+    font-family: 'Courier New', 'Monaco', monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.docker-uptime {
+    color: #cccccc;
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+}
+        
+
+.docker-controls {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.docker-btn {
+    padding: 2px 10px;
+    font-size: 11px;
+    border: 1px solid #333333;
+    background: #222222;
+    color: #ffffff;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.docker-btn:hover {
+    background: #333333;
+    border-color: #444444;
+}
+
+.docker-btn.start {
+    background: #004400;
+    border-color: #006600;
+}
+
+.docker-btn.start:hover {
+    background: #006600;
+}
+
+.docker-btn.stop {
+    background: #440000;
+    border-color: #660000;
+}
+
+.docker-btn.stop:hover {
+    background: #660000;
+}
+
+.docker-btn.restart {
+    background: #444400;
+    border-color: #666600;
+}
+
+.docker-btn.restart:hover {
+    background: #666600;
+}
+
+/* Responsive Docker Section */
+@media (max-width: 768px) {
+    .docker-summary {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2%;
+    }
+            
+    .docker-containers {
+        overflow-x: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (max-width: 480px) {
+    .docker-btn {
+        padding: 2px 8px;
+        font-size: 10px;
+    }
+}
+        
+/* ==========================================
+   COMPREHENSIVE MOBILE RESPONSIVENESS
+   ========================================== */
+        
+/* Base font and sizing adjustments for mobile */
+html {
+    font-size: 16px;
+}
+        
+@media (max-width: 480px) {
+    html {
+        font-size: 14px;
+    }
+}
+        
+/* Touch target optimization - minimum 44x44px for mobile */
+.docker-btn,
+.terminal-tab,
+.terminal-add-tab-btn {
+    min-height: 44px;
+    min-width: 44px;
+}
+        
+/* Control buttons (SERVER CONTROL) - separate styling */
+.control-button {
+    min-height: auto;
+}
+        
+@media (min-width: 769px) {
+    /* Desktop buttons - reduced height */
+    .docker-btn {
+        min-height: auto;
+    }
+}
+        
+@media (max-width: 480px) {
+    .docker-btn {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+            
+    /* Control buttons keep smaller padding on mobile */
+    .control-button {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+}
+        
+/* Prevent text selection issues on mobile */
+* {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+        
+/* Improve scrolling on mobile */
+body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+        
+/* Optimize images and containers for mobile */
+img {
+    max-width: 100%;
+    height: auto;
+}
+        
+/* Ensure no horizontal overflow */
+.container {
+    overflow-x: hidden;
+}
+        
+/* Improve card readability on mobile */
+.metric {
+    word-break: break-word;
+    hyphens: auto;
+}
+        
+/* Mobile-specific metric adjustments */
+@media (max-width: 480px) {
+    .metric {
+        flex-wrap: wrap;
+        padding: 6px;
+        margin-bottom: 6px;
+        font-size: 0.875rem;
+    }
+            
+    .metric-label, .metric-value {
+        font-size: 0.875rem;
+    }
+}
+        
+/* Progress bar mobile optimization */
+.progress-bar {
+    min-height: 8px;
+}
+        
+@media (max-width: 480px) {
+    .progress-bar {
+        min-height: 6px;
+    }
+}
+        
+/* Button text should not wrap on very small screens */
+@media (max-width: 360px) {
+    .docker-btn {
+        font-size: 12px;
+        padding: 10px 12px;
+        white-space: nowrap;
+    }
+            
+    /* Control buttons - separate styling for very small screens */
+    .control-button {
+        font-size: 11px;
+        padding: 8px 12px;
+        white-space: nowrap;
+    }
+}
+        
+/* Ensure proper spacing for all interactive elements */
+@media (max-width: 480px) {
+    .card {
+        margin-bottom: 10px;
+    }
+}
+        
+/* Terminal specific mobile optimizations */
+@media (max-width: 480px) {
+    .terminal-container {
+        padding: 8px;
+    }
+            
+    .terminal-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+            
+    .terminal-tab {
+        flex-shrink: 0;
+        height: 32px;
+    }
+            
+    .terminal-tab .tab-title {
+        padding: 6px 8px;
+    }
+            
+    .terminal-tabs-container {
+        min-width: min-content;
+    }
+}
+        
+/* Prevent horizontal scroll on mobile */
+@media (max-width: 480px) {
+    * {
+        max-width: 100vw;
+    }
+}
+        
+/* Improve table/list scrolling on mobile */
+.docker-containers {
+    -webkit-overflow-scrolling: touch;
+}
+        
+/* Small cards responsive breakpoint adjustments */
+@media (max-width: 600px) {
+    .small-cards-container {
+        gap: 12px;
+    }
+}
+        
+/* Font size adjustments for better readability on small screens */
+@media (max-width: 360px) {
+    .header h1 {
+        font-size: 1.3rem;
+    }
+            
+    .card h2 {
+        font-size: 0.95rem;
+    }
+            
+    .metric-label, .metric-value {
+        font-size: 0.8rem;
+    }
+}
+        
+/* Line height adjustments for better text readability */
+@media (max-width: 480px) {
+    body {
+        line-height: 1.5;
+    }
+            
+    .metric {
+        line-height: 1.6;
+    }
+}
+        
+/* Container padding optimization for mobile */
+@media (max-width: 360px) {
+    .container {
+        padding: 8px;
+    }
+            
+    .card {
+        padding: 10px;
+    }
+}
+        
+/* Prevent layout shift on mobile */
+img, video, iframe {
+    display: block;
+}
+        
+/* Loading states should not cause horizontal scroll */
+@media (max-width: 480px) {
+    #os-info, #uptime, #hostname, 
+    #cpu-usage, #memory-used, #disk-used,
+    #load-average, #cpu-temp {
+        word-break: break-all;
+        overflow-wrap: break-word;
+    }
+}
+        
+/* Ensure proper display of status indicators */
+@media (max-width: 480px) {
+    .status-indicator {
+        width: 6px;
+        height: 6px;
+    }
+}
+        
+/* Server control buttons should stack on mobile */
+.server-control {
+    flex-wrap: wrap;
+}
+        
+@media (max-width: 480px) {
+    .server-control {
+        gap: 10px;
+    }
+            
+    .control-button {
+        flex: 1 1 100%;
+        margin-bottom: 5px;
+    }
+}
+        
+/* Summary sections should stack on mobile */
+.docker-summary {
+    gap: 10px;
+}
+        
+@media (max-width: 480px) {
+    .docker-summary {
+        gap: 8px;
+    }
+}
+        
+/* Prevent overflow in container names */
+.docker-name {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+        
+@media (max-width: 480px) {
+    .docker-name {
+        font-size: 0.85rem;
+    }
+}
+        
+/* Optimize terminal for landscape on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .terminal-container {
+        height: 30vh;
+        min-height: 200px;
+    }
+}
+        
+@media (max-width: 480px) and (orientation: landscape) {
+    .terminal-container {
+        height: 25vh;
+        min-height: 150px;
+    }
+}
+        
+/* File Manager Styles */
+.file-manager-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    align-items: center;
+}
+
+.file-manager-btn {
+    padding: 6px 12px;
+    background: #222222;
+    border: 1px solid #333333;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: 'Courier New', 'Monaco', monospace;
+    transition: all 0.3s ease;
+    min-width: 40px;
+}
+
+.file-manager-btn:hover {
+    background: #333333;
+    border-color: #555555;
+}
+
+.file-path-input {
+    flex: 1;
+    padding: 6px 12px;
+    background: #222222;
+    border: 1px solid #333333;
+    color: #ffffff;
+    font-family: 'Courier New', 'Monaco', monospace;
+    font-size: 12px;
+}
+
+.file-path-input:focus {
+    outline: none;
+    border-color: #555555;
+}
+
+.file-manager-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #333333;
+    background: #111111;
+}
+
+.file-manager-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.file-manager-list::-webkit-scrollbar-track {
+    background: #111111;
+}
+
+.file-manager-list::-webkit-scrollbar-thumb {
+    background: #333333;
+    border-radius: 4px;
+}
+
+.file-manager-list::-webkit-scrollbar-thumb:hover {
+    background: #444444;
+}
+
+.file-item {
+    display: grid;
+    grid-template-columns: 30px 1fr 100px 80px 100px 150px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #222222;
+    align-items: center;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.file-item:hover {
+    background: #222222;
+}
+
+.file-item:last-child {
+    border-bottom: none;
+}
+
+.file-icon {
+    text-align: center;
+    font-size: 16px;
+}
+
+.file-name {
+    color: #ffffff;
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-size {
+    color: #cccccc;
+    text-align: right;
+}
+
+.file-type {
+    color: #888888;
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.file-owner {
+    color: #999999;
+    font-size: 11px;
+}
+
+.file-modified {
+    color: #999999;
+    font-size: 11px;
+}
+
+.file-header {
+    display: grid;
+    grid-template-columns: 30px 1fr 100px 80px 100px 150px;
+    padding: 8px 12px;
+    background: #333333;
+    font-weight: bold;
+    font-size: 12px;
+    border-bottom: 2px solid #444444;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Security Dashboard Styles */
+.security-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #333333;
+}
+
+.security-tab {
+    padding: 8px 16px;
+    background: #222222;
+    border: 1px solid #333333;
+    border-bottom: none;
+    color: #cccccc;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'Courier New', 'Monaco', monospace;
+    transition: all 0.3s ease;
+}
+
+.security-tab:hover {
+    background: #2a2a2a;
+    border-color: #555555;
+}
+
+.security-tab.active {
+    background: #000000;
+    color: #ffffff;
+    border-color: #555555;
+}
+
+.security-content {
+    border: 1px solid #333333;
+    background: #111111;
+    min-height: 100px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.security-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.security-content::-webkit-scrollbar-track {
+    background: #111111;
+}
+
+.security-content::-webkit-scrollbar-thumb {
+    background: #333333;
+    border-radius: 4px;
+}
+
+.security-content::-webkit-scrollbar-thumb:hover {
+    background: #444444;
+}
+
+.security-item {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.5fr 120px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #222222;
+    align-items: center;
+    font-size: 12px;
+}
+
+.security-item:last-child {
+    border-bottom: none;
+}
+
+.security-item:hover {
+    background: #222222;
+}
+
+.security-header {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.5fr 120px;
+    padding: 10px 12px;
+    background: #333333;
+    font-weight: bold;
+    font-size: 12px;
+    border-bottom: 2px solid #444444;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+        
+.security-terminate-btn {
+    padding: 4px 10px;
+    background: #440000;
+    border: 1px solid #660000;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 11px;
+    font-family: 'Courier New', 'Monaco', monospace;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+        
+.security-terminate-btn:hover {
+    background: #660000;
+    border-color: #880000;
+}
+
+.security-value {
+    color: #ffffff;
+}
+
+.security-label {
+    color: #cccccc;
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .file-header,
+    .file-item {
+        grid-template-columns: 30px 1fr 80px;
+        font-size: 11px;
+    }
+
+    .file-size,
+    .file-type,
+    .file-owner,
+    .file-modified {
+        display: none;
+    }
+
+    .security-item,
+    .security-header {
+        grid-template-columns: 2fr 1fr;
+        font-size: 11px;
+    }
+}
+
+/* 1.5x sizing for Stop and Restart buttons */
+.docker-btn.stop,
+.docker-btn.restart {
+    font-size: 16.5px; /* 1.5x of 11px */
+    padding: 3px 15px; /* 1.5x of 2px 10px */
+}
+
+

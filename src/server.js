@@ -36,6 +36,7 @@ const limiter = rateLimit({
   max: 100, // limit each IP to 100 requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false
 });
 
 const authLimiter = rateLimit({
@@ -46,10 +47,26 @@ const authLimiter = rateLimit({
 });
 
 // Middleware
+app.set('trust proxy', false);
 app.use(cors());
-app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ strict: false, type: ['application/json', 'application/*+json'] }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use('/api/', limiter);
+
+// Basic health endpoint for readiness/liveness checks
+app.get('/healthz', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+// Handle JSON parse errors gracefully
+app.use((err, req, res, next) => {
+  // body-parser sets type to 'entity.parse.failed' for invalid JSON
+  if (err && (err.type === 'entity.parse.failed' || err instanceof SyntaxError)) {
+    return res.status(400).json({ status: 'error', error: 'Bad Request: invalid JSON' });
+  }
+  next(err);
+});
 
 // Store terminal sessions
 const terminals = new Map();
@@ -174,7 +191,25 @@ app.get('/login', (req, res) => {
 
 app.post('/api/login', authLimiter, (req, res) => {
   try {
-    const { password } = req.body;
+    const body = req.body || {};
+    let password = undefined;
+    if (typeof body === 'object') {
+      password = body.password || body['password'];
+    }
+    // Fallbacks to improve robustness when JSON parsing fails upstream
+    if (!password) {
+      password = req.query.password || req.get('x-password');
+    }
+
+    console.log('LOGIN DEBUG:', {
+      contentType: req.get('content-type'),
+      hasBody: !!req.body,
+      bodyType: typeof req.body,
+      rawHeaderPassword: req.get('x-password') || null,
+      queryPassword: req.query && req.query.password ? '[set]' : null,
+      resolvedPasswordPresent: password ? true : false,
+      adminPasswordPresent: ADMIN_PASSWORD ? true : false
+    });
     
     if (!password || !verifyPassword(password)) {
       return res.status(401).json({ 
@@ -190,7 +225,8 @@ app.post('/api/login', authLimiter, (req, res) => {
       token: token
     });
   } catch (error) {
-    res.status(500).json({ error: error.message, status: 'error' });
+    console.error('Login error:', error?.message || error);
+    res.status(500).json({ error: 'Internal Server Error', status: 'error' });
   }
 });
 
@@ -867,14 +903,14 @@ app.post('/api/reboot', requireAuth, (req, res) => {
 // File Manager endpoints
 app.get('/api/files', requireAuth, (req, res) => {
   try {
-    let { path: dirPath = '/host/root' } = req.query;
+    let { path: dirPath = '/host/home/arch' } = req.query;
     
     // Sanitize and validate path
     dirPath = dirPath.replace(/[;&|`$<>'"\0]/g, '');
     
     // Ensure path starts with /host
     if (!dirPath.startsWith('/host')) {
-      dirPath = '/host/root';
+      dirPath = '/host/home/arch';
     }
     
     const sanitizedPath = escapeShellArg(dirPath);
@@ -911,7 +947,9 @@ app.get('/api/files', requireAuth, (req, res) => {
           modified: `${date} ${time}`,
           path: `${dirPath}/${name}`.replace('//', '/')
         };
-      }).filter(item => item !== null);
+      }).filter(item => item !== null)
+        // Hide dotfiles (names beginning with .)
+        .filter(item => !item.name.startsWith('.'));
       
       res.json({ files, path: dirPath });
     });
@@ -931,7 +969,17 @@ app.get('/api/files/download', requireAuth, (req, res) => {
     // Sanitize file path
     filePath = filePath.replace(/[;&|`$<>'"\0]/g, '');
     
-    const file = path.resolve('/host', filePath);
+    // Support both absolute (/host/...) and relative (under /host) paths
+    let file = '';
+    if (filePath.startsWith('/host/')) {
+      file = path.resolve(filePath);
+    } else if (filePath.startsWith('/')) {
+      // Treat absolute host path (e.g., /home/arch/...) as under /host
+      file = path.resolve('/host', filePath);
+    } else {
+      // Relative path under /host
+      file = path.resolve('/host', filePath);
+    }
     
     // Ensure path is within /host
     if (!file.startsWith('/host')) {

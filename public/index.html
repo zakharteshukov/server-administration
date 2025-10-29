@@ -17,17 +17,7 @@
     <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
-    <style>
-        /* ==========================================
-           RESET & BASE STYLES
-           ========================================== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-        }
+    <link rel="stylesheet" href="/styles.css">
 
         html {
             font-size: 16px;
@@ -720,6 +710,13 @@
         .docker-btn.restart:hover {
             background: #666600;
         }
+        
+        /* Increase size of Stop and Restart buttons by 1.5x */
+        .docker-btn.stop,
+        .docker-btn.restart {
+            font-size: 16.5px; /* 1.5x of 11px */
+            padding: 3px 15px; /* 1.5x of 2px 10px */
+        }
 
         /* Responsive Docker Section */
         @media (max-width: 768px) {
@@ -1292,7 +1289,7 @@
             }
         }
 
-    </style>
+    
 </head>
 <body>
     <!-- ==========================================
@@ -1433,7 +1430,7 @@
             <div class="file-manager-controls">
                 <button class="file-manager-btn" onclick="fileManagerNavigateUp()" title="Go up">⬆</button>
                 <button class="file-manager-btn" onclick="fileManagerRefresh()" title="Refresh">⟳</button>
-                <input type="text" id="file-manager-path" placeholder="/host/root" class="file-path-input" onkeypress="handlePathInput(event)">
+                <input type="text" id="file-manager-path" placeholder="/host/home/arch" class="file-path-input" onkeypress="handlePathInput(event)">
             </div>
             <div class="file-manager-list" id="file-manager-list">
                 <div style="padding: 2%; text-align: center; color: #666666;">Loading...</div>
@@ -1467,12 +1464,9 @@
     <!-- ==========================================
          JAVASCRIPT APPLICATION CODE
          ========================================== -->
+    <script src="/app.js"></script>
     <script>
-        // ==========================================
-        // GLOBAL VARIABLES & CONFIGURATION
-        // ==========================================
-        let currentPath = '/host/root';
-        let currentSecurityTab = 'ssh';
+        // Keep minimal inline bootstrap if necessary (none needed currently)
         
         // ==========================================
         // UTILITY FUNCTIONS
@@ -1848,41 +1842,64 @@
         function getAccessInfo(containerName, ports) {
             const accessMap = {
                 'code-server': {
-                    web: 'http://192.168.255.1:8080',
+                    web: 'http://72.60.209.207:8080',
                     cli: 'docker exec -it code-server bash'
                 },
-                'jellyfin': {
-                    web: 'http://192.168.255.1:8096',
-                    cli: 'docker exec -it jellyfin bash'
+                'grafana': {
+                    web: 'http://72.60.209.207:3030',
+                    cli: 'docker exec -it grafana bash'
                 },
-                'ollama': {
-                    web: 'http://192.168.255.1:11434',
-                    api: 'curl http://localhost:11434/api/tags',
-                    cli: 'docker exec -it ollama ollama run llama2'
+                'node-exporter': {
+                    web: 'http://72.60.209.207:9100',
+                    cli: 'docker exec -it node-exporter bash'
+                },
+                'cadvisor': {
+                    web: 'http://72.60.209.207:8081',
+                    cli: 'docker exec -it cadvisor bash'
+                },
+                'prometheus': {
+                    web: 'http://72.60.209.207:9090',
+                    cli: 'docker exec -it prometheus bash'
+                },
+                'system-monitor': {
+                    web: 'http://72.60.209.207:3000',
+                    cli: 'docker exec -it system-monitor bash'
+                },
+                'OBFUSCATION': {
+                    web: 'http://72.60.209.207:3002',
+                    cli: 'docker exec -it OBFUSCATION bash'
+                },
+                'frc10951-website': {
+                    web: 'http://72.60.209.207:3001',
+                    cli: 'docker exec -it frc10951-website bash'
+                },
+                'FRC10951-SITE': {
+                    web: 'http://72.60.209.207:3001',
+                    cli: 'docker exec -it FRC10951-SITE bash'
                 },
                 'pihole': {
-                    web: 'http://192.168.255.1:81',
+                    web: 'http://72.60.209.207:81',
                     cli: 'docker exec -it pihole bash'
+                },
+                'autoheal': {
+                    web: 'N/A',
+                    cli: 'docker exec -it autoheal bash'
+                },
+                'ollama': {
+                    web: 'http://72.60.209.207:11434',
+                    cli: 'docker exec -it ollama bash'
+                },
+                'jellyfin': {
+                    web: 'http://72.60.209.207:8096',
+                    cli: 'docker exec -it jellyfin bash'
                 },
                 'openvpn-server': {
                     web: 'N/A',
                     cli: 'docker exec -it openvpn-server bash'
                 },
-                'system-monitor': {
-                    web: 'http://192.168.255.1:3000',
-                    cli: 'docker exec -it system-monitor bash'
-                },
-                'FRC10951-SITE': {
-                    web: 'http://192.168.255.1:3001',
-                    cli: 'docker exec -it FRC10951-SITE bash'
-                },
-                'GENERAL-SITE': {
-                    web: 'http://192.168.255.1:3002',
-                    cli: 'docker exec -it GENERAL-SITE bash'
-                },
                 'obsidian-backup-server': {
                     web: 'N/A',
-                    cli: 'docker start obsidian-backup-server'
+                    cli: 'docker exec -it obsidian-backup-server bash'
                 }
             };
             
@@ -1894,7 +1911,7 @@
                 if (accessInfo.web === 'N/A') {
                     result += '<span style="color: #666;">No web access</span>';
                 } else {
-                    result += `<a href="${accessInfo.web}" target="_blank" style="color: #4CAF50; text-decoration: none; word-break: break-all;">${accessInfo.web}</a>`;
+                    result += `<span style="color: #ffffff; font-family: monospace;">${accessInfo.web}</span>`;
                 }
             }
             
@@ -1905,11 +1922,17 @@
                 result += `<br><span style="color: #999; font-family: monospace; font-size: 10px;">${accessInfo.api}</span>`;
             }
             
-            // If no specific mapping, show ports
+            // If no specific mapping, show docker exec command and try to extract port from ports string
             if (!accessInfo.web && !accessInfo.cli && ports && ports !== 'No ports') {
-                result += `<span style="color: #888; font-family: monospace;">${ports.substring(0, 50)}</span>`;
+                // Try to extract port from Docker port format (e.g., "0.0.0.0:8080->8080/tcp")
+                const portMatch = ports.match(/0\.0\.0\.0:(\d+)->/);
+                if (portMatch) {
+                    const port = portMatch[1];
+                    result += `<span style="color: #ffffff; font-family: monospace;">http://72.60.209.207:${port}</span><br>`;
+                }
+                result += `<span style="color: #999; font-family: monospace; font-size: 10px;">docker exec -it ${containerName} bash</span>`;
             } else if (!accessInfo.web && !accessInfo.cli) {
-                result += '<span style="color: #666;">No access info</span>';
+                result += `<span style="color: #999; font-family: monospace; font-size: 10px;">docker exec -it ${containerName} bash</span>`;
             }
             
             result += '</div>';
@@ -1949,12 +1972,12 @@
                 
                 if (isRunning) {
                     buttons = `
-                        <button class="docker-btn stop" onclick="controlContainer('${container.name}', 'stop')">Stop</button>
-                        <button class="docker-btn restart" onclick="controlContainer('${container.name}', 'restart')">Restart</button>
+                        <button class="docker-btn stop" onclick="controlContainer('${container.name}', 'stop', this)">Stop</button>
+                        <button class="docker-btn restart" onclick="controlContainer('${container.name}', 'restart', this)">Restart</button>
                     `;
                 } else {
                     buttons = `
-                        <button class="docker-btn start" onclick="controlContainer('${container.name}', 'start')">Start</button>
+                        <button class="docker-btn start" onclick="controlContainer('${container.name}', 'start', this)">Start</button>
                     `;
                 }
                 
@@ -2031,10 +2054,16 @@
         }
         
         // Container control function (global scope)
-        function controlContainer(containerName, action) {
+        function controlContainer(containerName, action, btn) {
             const password = prompt(`Enter password to ${action} container '${containerName}':`);
             if (password === null) return; // User cancelled
-            
+
+            const originalText = btn ? btn.textContent : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = action.charAt(0).toUpperCase() + action.slice(1) + '...';
+            }
+
             const token = localStorage.getItem('adminToken');
             fetch(`/api/docker/${action}`, { 
                 method: 'POST',
@@ -2047,19 +2076,27 @@
                     password: password 
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    alert(`Container '${containerName}' ${action} initiated successfully.`);
-                    // Refresh Docker data after a short delay
-                    setTimeout(loadDockerData, 2000);
-                } else {
-                    alert('Error: ' + data.error);
+            .then(async (response) => {
+                let data = null;
+                try { data = await response.json(); } catch (e) {}
+                if (!response.ok) {
+                    throw new Error((data && (data.error || data.message)) || `HTTP ${response.status}`);
                 }
+                return data;
+            })
+            .then(data => {
+                console.log(`Container '${containerName}' ${action} response:`, data);
+                setTimeout(loadDockerData, 2000);
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert(`Failed to ${action} container.`);
+                alert(`Failed to ${action} container '${containerName}': ${error.message || error}`);
+            })
+            .finally(() => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = originalText || btn.textContent;
+                }
             });
         }
         
@@ -2339,9 +2376,7 @@
                             <div class="security-value">${clientName}</div>
                             <div class="security-value">${ip}</div>
                             <div class="security-value">${duration}</div>
-                            <div>
-                                <button class="security-terminate-btn" onclick="terminateOpenVPNClient('${clientName}')">Terminate</button>
-                            </div>
+                            <div style="color: #888; font-size: 11px;">View only</div>
                         </div>
                     `;
                 }).join('');

@@ -9,7 +9,9 @@ SERVER-DASHBOARD/
 ├── src/                          # Source code
 │   └── server.js                 # Main server application
 ├── public/                       # Frontend files
-│   ├── index.html               # Main dashboard interface
+│   ├── index.html               # Main dashboard interface (links styles and app script)
+│   ├── styles.css               # Extracted global styles for dashboard
+│   ├── app.js                   # Extracted frontend logic for dashboard
 │   ├── login.html               # Login page
 │   ├── terminal-fullscreen.html # Terminal interface
 │   ├── favicon.jpg              # Application icon
