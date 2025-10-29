@@ -1,0 +1,43 @@
+/* ==========================================
+   MAIN STYLES - Base and Reset
+   ========================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+
+html {
+    font-size: 16px;
+}
+
+body {
+    font-family: 'Courier New', 'Monaco', monospace;
+    background: #000000;
+    min-height: 100vh;
+    color: #ffffff;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
+/* Prevent layout shift on mobile */
+img, video, iframe {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+/* Base font sizing adjustments for mobile */
+@media (max-width: 480px) {
+    html {
+        font-size: 14px;
+    }
+}
+
+

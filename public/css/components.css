@@ -1,0 +1,256 @@
+/* ==========================================
+   COMPONENT STYLES - Cards, Metrics, Buttons, Progress
+   ========================================== */
+
+.card {
+    background: #111111;
+    border: 1px solid #333333;
+    padding: 20px;
+    transition: border-color 0.3s ease;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.card:hover {
+    border-color: #666666;
+}
+
+.card h2 {
+    color: #ffffff;
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    border-bottom: 1px solid #333333;
+    padding-bottom: 10px;
+    font-weight: normal;
+}
+
+.metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 8px;
+    background: #222222;
+    border: 1px solid #333333;
+    word-break: break-word;
+    hyphens: auto;
+}
+
+.metric-label {
+    font-weight: normal;
+    color: #cccccc;
+}
+
+.metric-value {
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #333333;
+    overflow: hidden;
+    margin-top: 5px;
+    border: 1px solid #444444;
+    min-height: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #ffffff;
+    transition: width 0.3s ease;
+}
+
+.small-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 6px;
+}
+
+.status-online {
+    background: #00ff00;
+}
+
+.status-offline {
+    background: #666666;
+}
+
+/* Server Control Buttons */
+.server-control {
+    display: flex;
+    gap: 2%;
+    justify-content: space-between;
+    margin-top: 2%;
+    flex-wrap: wrap;
+}
+
+.control-button {
+    background: #222222;
+    border: 1px solid #333333;
+    color: #ffffff;
+    padding: 2% 4%;
+    cursor: pointer;
+    font-family: 'Courier New', 'Monaco', monospace;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    width: 32%;
+    flex: 1;
+    min-width: 30%;
+    min-height: 44px;
+}
+
+.control-button:hover {
+    background: #333333;
+    border-color: #666666;
+}
+
+.shutdown-button {
+    background: #440000;
+    border-color: #660000;
+}
+
+.shutdown-button:hover {
+    background: #660000;
+    border-color: #880000;
+}
+
+.reboot-button {
+    background: #004400;
+    border-color: #006600;
+}
+
+.reboot-button:hover {
+    background: #006600;
+    border-color: #008800;
+}
+
+.logout-button {
+    background: #333366;
+    border-color: #444477;
+}
+
+.logout-button:hover {
+    background: #444477;
+    border-color: #555588;
+}
+
+/* Responsive Components */
+@media (max-width: 768px) {
+    .card {
+        padding: 15px;
+    }
+    
+    .card h2 {
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+    }
+    
+    .metric {
+        padding: 6px;
+        margin-bottom: 8px;
+    }
+    
+    .small-cards-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .control-button {
+        font-size: 12px;
+        padding: 2.5% 4%;
+    }
+}
+
+@media (max-width: 480px) {
+    .card {
+        padding: 12px;
+        margin-bottom: 10px;
+    }
+    
+    .card h2 {
+        font-size: 1rem;
+        margin-bottom: 12px;
+        padding-bottom: 6px;
+    }
+    
+    .metric {
+        padding: 5px;
+        margin-bottom: 6px;
+        font-size: 0.9rem;
+        flex-wrap: wrap;
+        line-height: 1.6;
+    }
+    
+    .metric-label, .metric-value {
+        font-size: 0.875rem;
+    }
+    
+    .progress-bar {
+        min-height: 6px;
+    }
+    
+    .server-control {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .control-button {
+        font-size: 11px;
+        padding: 3% 5%;
+        width: 100%;
+        flex: 1 1 100%;
+        margin-bottom: 5px;
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+    
+    .small-cards-container {
+        gap: 12px;
+    }
+    
+    .status-indicator {
+        width: 6px;
+        height: 6px;
+    }
+}
+
+@media (max-width: 360px) {
+    .card {
+        padding: 10px;
+    }
+    
+    .header h1 {
+        font-size: 1.3rem;
+    }
+    
+    .card h2 {
+        font-size: 0.95rem;
+    }
+    
+    .metric-label, .metric-value {
+        font-size: 0.8rem;
+    }
+    
+    button, .control-button {
+        font-size: 12px;
+        padding: 10px 12px;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 600px) {
+    .small-cards-container {
+        gap: 12px;
+    }
+}
+
+

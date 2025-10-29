@@ -1,0 +1,187 @@
+/* ==========================================
+   SYSTEM SERVICES STYLES
+   ========================================== */
+
+.services-summary {
+    display: flex;
+    gap: 2%;
+    margin-bottom: 2%;
+}
+
+.services-summary .metric {
+    flex: 1;
+    width: 33.33%;
+    box-sizing: border-box;
+}
+
+.services-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #333333;
+    background: #111111;
+    -webkit-overflow-scrolling: touch;
+}
+
+.service-item {
+    display: grid;
+    grid-template-columns: 2fr auto;
+    gap: 1%;
+    padding: 1%;
+    border-bottom: 1px solid #222222;
+    align-items: center;
+    font-size: 12px;
+}
+
+.service-item:last-child {
+    border-bottom: none;
+}
+
+.service-item:hover {
+    background: #222222;
+}
+
+.service-header {
+    display: grid;
+    grid-template-columns: 2fr auto;
+    gap: 1%;
+    padding: 1%;
+    background: #333333;
+    font-weight: bold;
+    font-size: 12px;
+    border-bottom: 1px solid #444444;
+}
+
+.service-name {
+    color: #ffffff;
+    font-weight: bold;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.service-name-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.service-description {
+    color: #999999;
+    font-size: 10px;
+    font-weight: normal;
+    font-style: italic;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.service-uptime {
+    color: #cccccc;
+    font-size: 11px;
+}
+
+.service-controls {
+    display: flex;
+    gap: 5px;
+    justify-content: flex-end;
+}
+
+.service-btn {
+    padding: 4px 8px;
+    font-size: 10px;
+    border: 1px solid #333333;
+    background: #222222;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 44px;
+    min-width: 44px;
+}
+
+.service-btn:hover {
+    background: #333333;
+    border-color: #444444;
+}
+
+.service-btn.start {
+    background: #004400;
+    border-color: #006600;
+}
+
+.service-btn.start:hover {
+    background: #006600;
+}
+
+.service-btn.stop {
+    background: #440000;
+    border-color: #660000;
+}
+
+.service-btn.stop:hover {
+    background: #660000;
+}
+
+.service-btn.restart {
+    background: #444400;
+    border-color: #666600;
+}
+
+.service-btn.restart:hover {
+    background: #666600;
+}
+
+/* Responsive Services Section */
+@media (max-width: 768px) {
+    .services-summary {
+        flex-direction: column;
+        gap: 1%;
+    }
+    
+    .services-summary .metric {
+        width: 100%;
+    }
+    
+    .service-item,
+    .service-header {
+        grid-template-columns: 1.5fr 1fr;
+        gap: 0.5%;
+        padding: 2%;
+    }
+    
+    .service-item > div,
+    .service-header > div {
+        padding: 1%;
+    }
+}
+
+@media (max-width: 480px) {
+    .services-list {
+        max-height: 300px;
+    }
+    
+    .service-item {
+        font-size: 11px;
+    }
+    
+    .service-header {
+        font-size: 11px;
+    }
+    
+    .service-description {
+        font-size: 9px;
+    }
+    
+    .service-name {
+        font-size: 0.85rem;
+    }
+    
+    .service-btn {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+    
+    .docker-summary,
+    .services-summary {
+        gap: 8px;
+    }
+}
+
+

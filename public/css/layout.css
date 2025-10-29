@@ -1,0 +1,115 @@
+/* ==========================================
+   LAYOUT STYLES - Container, Header, Dashboard
+   ========================================== */
+
+.container {
+    max-width: 100%;
+    margin: 0;
+    padding: 1% 3%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #ffffff;
+    border-bottom: 2px solid #333333;
+    padding-bottom: 20px;
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    color: #ffffff;
+    font-weight: normal;
+}
+
+.header p {
+    font-size: 1.1rem;
+    color: #cccccc;
+}
+
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Responsive Container */
+@media (max-width: 1200px) {
+    .container {
+        padding: 1% 2.5%;
+    }
+    
+    .header h1 {
+        font-size: 2.2rem;
+    }
+    
+    .header p {
+        font-size: 1rem;
+    }
+    
+    .dashboard {
+        gap: 18px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 1% 2%;
+    }
+    
+    .header {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+    }
+    
+    .header h1 {
+        font-size: 2rem;
+        margin-bottom: 8px;
+    }
+    
+    .header p {
+        font-size: 0.9rem;
+    }
+    
+    .dashboard {
+        gap: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0.5% 1.5%;
+    }
+    
+    .header {
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+    }
+    
+    .header h1 {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+    }
+    
+    .header p {
+        font-size: 0.8rem;
+    }
+    
+    .dashboard {
+        gap: 12px;
+    }
+}
+
+@media (max-width: 360px) {
+    .container {
+        padding: 8px;
+    }
+}
+
+
