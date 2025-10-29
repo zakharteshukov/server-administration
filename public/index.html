@@ -3,29 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Server Administration Dashboard - Real-time system monitoring with Docker container management and system service controls">
+    <meta name="description" content="Server Administration Dashboard - Real-time system monitoring with Docker container management">
     <title>Server Administration</title>
-    
-    <!-- iOS Web App Configuration -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="Server Admin">
-    
-    <!-- PWA Support -->
-    <link rel="manifest" href="/manifest.json">
     
     <!-- Icons -->
     <link rel="icon" type="image/jpeg" href="/favicon.jpg">
-    <link rel="apple-touch-icon" href="/favicon.jpg">
-    
-    <!-- Splash screens for iOS -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#000000">
     
     <!-- External Dependencies -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-search@0.16.0/lib/xterm-addon-search.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
     
     <!-- Modular CSS Files -->
@@ -34,7 +22,8 @@
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/terminal.css">
     <link rel="stylesheet" href="css/docker.css">
-    <link rel="stylesheet" href="css/services.css">
+    <link rel="stylesheet" href="css/file-manager.css">
+    <link rel="stylesheet" href="css/security.css">
 </head>
 <body>
     <div class="container">
@@ -52,6 +41,25 @@
                         <div class="terminal-tabs-container" id="terminal-tabs"></div>
                         <button class="terminal-add-tab-btn" onclick="window.createNewTerminal()" title="New Terminal (Ctrl+T)">+</button>
                         <button class="terminal-fullscreen-btn" onclick="enterFullscreenTerminal()" title="Fullscreen Terminal">⛶</button>
+                    </div>
+                    <div class="terminal-toolbar">
+                        <div class="terminal-search">
+                            <input id="terminal-search-input" type="text" placeholder="Search…" onkeypress="if(event.key==='Enter'){window.terminalManager.searchNext();}" />
+                            <button class="terminal-btn" onclick="window.terminalManager.searchPrev()" title="Previous (Shift+Enter)">⇧ Enter</button>
+                            <button class="terminal-btn" onclick="window.terminalManager.searchNext()" title="Next (Enter)">Enter</button>
+                            <label class="terminal-checkbox"><input id="terminal-search-regex" type="checkbox" onchange="window.terminalManager.setSearchRegex(this.checked)"> Regex</label>
+                            <label class="terminal-checkbox"><input id="terminal-search-case" type="checkbox" onchange="window.terminalManager.setSearchCaseSensitive(this.checked)"> Aa</label>
+                        </div>
+                        <div class="terminal-settings">
+                            <button class="terminal-btn" onclick="window.terminalManager.decreaseFont()" title="Smaller font">A−</button>
+                            <button class="terminal-btn" onclick="window.terminalManager.increaseFont()" title="Larger font">A+</button>
+                            <select id="terminal-theme-select" onchange="window.terminalManager.setTheme(this.value)">
+                                <option value="default">Default</option>
+                                <option value="high-contrast">High Contrast</option>
+                            </select>
+                            <label class="terminal-checkbox"><input id="terminal-copy-on-select" type="checkbox" onchange="window.terminalManager.setCopyOnSelect(this.checked)"> Copy on select</label>
+                            <label class="terminal-checkbox"><input id="terminal-bracketed-paste" type="checkbox" onchange="window.terminalManager.setBracketedPaste(this.checked)"> Bracketed paste</label>
+                        </div>
                     </div>
                     <div class="terminal-content" id="terminal-content"></div>
                 </div>
@@ -162,25 +170,29 @@
                 </div>
             </div>
 
-            <!-- System Services -->
+            <!-- File Manager -->
             <div class="card">
-                <h2>SYSTEM SERVICES</h2>
-                <div class="services-summary">
-                    <div class="metric">
-                        <span class="metric-label">Total Services</span>
-                        <span class="metric-value" id="total-services">0</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Active</span>
-                        <span class="metric-value" id="active-services">0</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Inactive</span>
-                        <span class="metric-value" id="inactive-services">0</span>
-                    </div>
+                <h2>FILE MANAGER</h2>
+                <div class="file-manager-controls">
+                    <button class="file-manager-btn" onclick="fileManagerNavigateUp()" title="Go up">⬆</button>
+                    <button class="file-manager-btn" onclick="fileManagerRefresh()" title="Refresh">⟳</button>
+                    <input type="text" id="file-manager-path" placeholder="/host/home/arch" class="file-path-input" onkeypress="handlePathInput(event)">
                 </div>
-                <div class="services-list" id="services-list">
-                    <!-- System services will be populated here -->
+                <div class="file-manager-list" id="file-manager-list">
+                    <div style="padding: 2%; text-align: center; color: #666666;">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Security Dashboard -->
+            <div class="card">
+                <h2>SECURITY DASHBOARD</h2>
+                <div class="security-tabs">
+                    <button class="security-tab active" onclick="switchSecurityTab('ssh')">SSH Sessions</button>
+                    <button class="security-tab" onclick="switchSecurityTab('openvpn')">OpenVPN</button>
+                    <button class="security-tab" onclick="switchSecurityTab('connections')">Active Connections</button>
+                </div>
+                <div id="security-content" class="security-content">
+                    <!-- Security content will be populated here -->
                 </div>
             </div>
 
@@ -197,10 +209,6 @@
     </div>
 
     <!-- Modular JavaScript Files -->
-    <!-- Note: Using type="module" requires a server that supports ES6 modules -->
-    <!-- For non-module environments, you would need a bundler like webpack/rollup -->
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
-
-

@@ -6,8 +6,9 @@ import { isAuthenticated } from './utils.js';
 import { TerminalManager } from './terminal.js';
 import { initializeSystemMonitoring } from './system.js';
 import { initializeDockerMonitoring } from './docker.js';
-import { initializeServicesMonitoring } from './services.js';
 import { initializeServerControls } from './server-control.js';
+import { initializeSecurityMonitoring } from './security.js';
+import { initializeFileManager } from './file-manager.js';
 import { UPDATE_INTERVALS } from '../config/container-ports.js';
 
 /**
@@ -15,12 +16,16 @@ import { UPDATE_INTERVALS } from '../config/container-ports.js';
  * @param {object} socket - Socket.IO instance
  */
 export function initializeApp(socket) {
-    // Initialize terminal manager
-    const terminalManager = new TerminalManager(socket);
-    terminalManager.initialize();
-    window.terminalManager = terminalManager;
-    window.createNewTerminal = () => terminalManager.createNewTerminal();
-    window.enterFullscreenTerminal = () => terminalManager.enterFullscreenTerminal();
+    // Initialize or reuse terminal manager
+    if (window.terminalManager) {
+        window.terminalManager.updateSocket(socket);
+    } else {
+        const terminalManager = new TerminalManager(socket);
+        terminalManager.initialize();
+        window.terminalManager = terminalManager;
+        window.createNewTerminal = () => terminalManager.createNewTerminal();
+        window.enterFullscreenTerminal = () => terminalManager.enterFullscreenTerminal();
+    }
 
     // Initialize system monitoring
     initializeSystemMonitoring(socket, UPDATE_INTERVALS.SYSTEM);
@@ -28,8 +33,11 @@ export function initializeApp(socket) {
     // Initialize Docker monitoring
     initializeDockerMonitoring(UPDATE_INTERVALS.DOCKER);
 
-    // Initialize services monitoring
-    initializeServicesMonitoring(UPDATE_INTERVALS.SERVICES);
+    // Initialize security monitoring
+    initializeSecurityMonitoring(UPDATE_INTERVALS.SECURITY);
+
+    // Initialize file manager
+    initializeFileManager(30000); // 30 seconds
 
     // Initialize server controls
     initializeServerControls();

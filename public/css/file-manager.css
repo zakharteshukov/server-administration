@@ -1,0 +1,149 @@
+/* ==========================================
+   FILE MANAGER STYLES
+   ========================================== */
+
+.file-manager-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    align-items: center;
+}
+
+.file-manager-btn {
+    padding: 6px 12px;
+    background: #222222;
+    border: 1px solid #333333;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: 'Courier New', 'Monaco', monospace;
+    transition: all 0.3s ease;
+    min-width: 40px;
+}
+
+.file-manager-btn:hover {
+    background: #333333;
+    border-color: #555555;
+}
+
+.file-path-input {
+    flex: 1;
+    padding: 6px 12px;
+    background: #222222;
+    border: 1px solid #333333;
+    color: #ffffff;
+    font-family: 'Courier New', 'Monaco', monospace;
+    font-size: 12px;
+}
+
+.file-path-input:focus {
+    outline: none;
+    border-color: #555555;
+}
+
+.file-manager-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #333333;
+    background: #111111;
+}
+
+.file-manager-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.file-manager-list::-webkit-scrollbar-track {
+    background: #111111;
+}
+
+.file-manager-list::-webkit-scrollbar-thumb {
+    background: #333333;
+    border-radius: 4px;
+}
+
+.file-manager-list::-webkit-scrollbar-thumb:hover {
+    background: #444444;
+}
+
+.file-item {
+    display: grid;
+    grid-template-columns: 30px 1fr 100px 80px 100px 150px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #222222;
+    align-items: center;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.file-item:hover {
+    background: #222222;
+}
+
+.file-item:last-child {
+    border-bottom: none;
+}
+
+.file-icon {
+    text-align: center;
+    font-size: 16px;
+}
+
+.file-name {
+    color: #ffffff;
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-size {
+    color: #cccccc;
+    text-align: right;
+}
+
+.file-type {
+    color: #888888;
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.file-owner {
+    color: #999999;
+    font-size: 11px;
+}
+
+.file-modified {
+    color: #999999;
+    font-size: 11px;
+}
+
+.file-header {
+    display: grid;
+    grid-template-columns: 30px 1fr 100px 80px 100px 150px;
+    padding: 8px 12px;
+    background: #333333;
+    font-weight: bold;
+    font-size: 12px;
+    border-bottom: 2px solid #444444;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Responsive File Manager */
+@media (max-width: 768px) {
+    .file-header,
+    .file-item {
+        grid-template-columns: 30px 1fr 80px;
+        font-size: 11px;
+    }
+
+    .file-size,
+    .file-type,
+    .file-owner,
+    .file-modified {
+        display: none;
+    }
+}
+

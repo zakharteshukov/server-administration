@@ -25,7 +25,7 @@ export const SERVER_IP = '72.60.209.207';
 export const UPDATE_INTERVALS = {
     SYSTEM: 5000,      // Update system data every 5 seconds
     DOCKER: 10000,     // Update Docker data every 10 seconds
-    SERVICES: 15000    // Update services data every 15 seconds
+    SECURITY: 15000    // Update security data every 15 seconds
 };
 
 

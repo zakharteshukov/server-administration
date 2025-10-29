@@ -1,0 +1,125 @@
+/* ==========================================
+   SECURITY DASHBOARD STYLES
+   ========================================== */
+
+.security-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #333333;
+}
+
+.security-tab {
+    padding: 8px 16px;
+    background: #222222;
+    border: 1px solid #333333;
+    border-bottom: none;
+    color: #cccccc;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'Courier New', 'Monaco', monospace;
+    transition: all 0.3s ease;
+}
+
+.security-tab:hover {
+    background: #2a2a2a;
+    border-color: #555555;
+}
+
+.security-tab.active {
+    background: #000000;
+    color: #ffffff;
+    border-color: #555555;
+}
+
+.security-content {
+    border: 1px solid #333333;
+    background: #111111;
+    min-height: 100px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.security-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.security-content::-webkit-scrollbar-track {
+    background: #111111;
+}
+
+.security-content::-webkit-scrollbar-thumb {
+    background: #333333;
+    border-radius: 4px;
+}
+
+.security-content::-webkit-scrollbar-thumb:hover {
+    background: #444444;
+}
+
+.security-item {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.5fr 120px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #222222;
+    align-items: center;
+    font-size: 12px;
+}
+
+.security-item:last-child {
+    border-bottom: none;
+}
+
+.security-item:hover {
+    background: #222222;
+}
+
+.security-header {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.5fr 120px;
+    padding: 10px 12px;
+    background: #333333;
+    font-weight: bold;
+    font-size: 12px;
+    border-bottom: 2px solid #444444;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.security-terminate-btn {
+    padding: 4px 10px;
+    background: #440000;
+    border: 1px solid #660000;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 11px;
+    font-family: 'Courier New', 'Monaco', monospace;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.security-terminate-btn:hover {
+    background: #660000;
+    border-color: #880000;
+}
+
+.security-value {
+    color: #ffffff;
+}
+
+.security-label {
+    color: #cccccc;
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .security-item,
+    .security-header {
+        grid-template-columns: 2fr 1fr;
+        font-size: 11px;
+    }
+}
+
